@@ -7,19 +7,4 @@ const getPeakLevel = (analyzer) => {
   );
 };
 
-const createMediaStream = (stream, isRecording, callback) => {
-  const context = new AudioContext();
-  const source = context.createMediaStreamSource(stream);
-  const analyzer = context.createAnalyser();
-  source.connect(analyzer);
-  const tick = () => {
-    const peak = getPeakLevel(analyzer);
-    if (isRecording) {
-      callback(peak);
-      requestAnimationFrame(tick);
-    }
-  };
-  tick();
-};
-
-export { createMediaStream }
+export { getPeakLevel }

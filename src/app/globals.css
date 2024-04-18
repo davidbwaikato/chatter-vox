@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.microphone-svg {
+    margin: 0.5rem;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    padding: 6px;    
+}
+
+
+.microphone-svg-container {
+  position: relative;
+}
+
+
+.microphone-level {
+    position: absolute;
+    display: none;
+    bottom: 0;
+    left: 25%;
+    width: 50%;
+    height: 50%;
+    background-color: rgba(128,128,128,0.5);
+}
+
