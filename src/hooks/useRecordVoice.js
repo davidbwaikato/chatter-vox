@@ -4,7 +4,7 @@ import { blobToBase64 } from "@/utils/blobToBase64";
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = () => {
-  const [text, setText] = useState("?");
+  const [text, setText] = useState("");
   const [micLevel, setMicLevel] = useState("0%");
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [recording, setRecording] = useState(false);
@@ -13,7 +13,7 @@ export const useRecordVoice = () => {
   const audioContext = useRef(null);
   const sourceNode   = useRef(null);
   const analyzerNode = useRef(null);
-    
+
   const startRecording = () => {
       if (mediaRecorder) {
 	  if (isRecording.current) {
@@ -35,7 +35,6 @@ export const useRecordVoice = () => {
 	isRecording.current = false;
 	mediaRecorder.stop();
         setRecording(false);
-        setMicLevel("0%");	
     }
   };
 
@@ -60,7 +59,7 @@ export const useRecordVoice = () => {
 
 	  if (response != null) {
 	      const { text } = response;
-	      setText(text);
+	      setText("Recognised text:" + text);
 	  }
       }
       catch (error) {
@@ -78,19 +77,19 @@ export const useRecordVoice = () => {
 	sourceNode.current.connect(analyzerNode.current);
 
 	const tick = () => {
-	    const peak = getPeakLevel(analyzerNode.current);
-	    //console.log(peak)
-	    const peak_perc = peak * 100;
-	    const peak_str = peak_perc.toFixed(0).toString();
-	    setMicLevel(peak_str + "%");
 
 	    if (isRecording.current) {
-		//if (callback) { callback(peak); }
+		const peak = getPeakLevel(analyzerNode.current);
+		const peak_perc = Math.min(peak * 130,100); // give it a bit of a visual boost!
+		const peak_str = peak_perc.toFixed(0).toString();
+		setMicLevel(peak_str + "%");
+
 		requestAnimationFrame(tick);
 	    }
 	    else {
 		sourceNode.current.disconnect();
 		audioContext.current.close();
+		setMicLevel("0%");
 	    }
 	};
 	tick();
