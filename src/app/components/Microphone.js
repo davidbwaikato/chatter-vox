@@ -20,7 +20,7 @@ const Microphone = () => {
           onTouchEnd={stopRecording}
           onContextMenu={(e)=> e.preventDefault()}
         >
-          <IconMicrophone />
+          <IconMicrophone micLevel={micLevel} />
         </button>
 	<p style={micLevelStyle} >Mic level: {micLevel}</p>
 	<p>Recognised text: {text}</p>

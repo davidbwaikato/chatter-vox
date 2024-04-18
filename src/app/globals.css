@@ -19,11 +19,11 @@
 
 .microphone-level {
     position: absolute;
-    display: none;
+    /* display: none; */
     bottom: 0;
     left: 25%;
     width: 50%;
-    height: 50%;
+    height: 0%;
     background-color: rgba(128,128,128,0.5);
 }
 
