@@ -3,8 +3,8 @@
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
 
-const Microphone = () => {
-    const { recording, startRecording, stopRecording, text, micLevel } = useRecordVoice();
+const Microphone = (props) => {
+    const { recording, startRecording, stopRecording, micLevel, text, audioFilename } = useRecordVoice(props);
 
     const lang_ = "en";
     // Language independent text messages
@@ -21,7 +21,7 @@ const Microphone = () => {
     const micLevelStyle = {
         display: 'none'
     };
- 
+    
     return (
       <div className="flex flex-col justify-center items-center">
 	    <p>{tm_how_to_record_[lang_]}</p>
