@@ -42,11 +42,8 @@ export const useRecordVoice = (props) => {
     };
     
     
-  const getText = async (base64data) => {
+    const getText = async (base64data, mimeType) => {
       try {
-	  //const audioMimeType = mediaRecorder.mimeType;
-	  //console.log("audioMimeType = " + audioMimeType);
-
 	  const response = await fetch("/api/speechToText", {
               method: "POST",
               headers: {
@@ -54,6 +51,7 @@ export const useRecordVoice = (props) => {
               },
               body: JSON.stringify({
 		  audio: base64data,
+		  mimeType: mimeType
               }),
 	  }).then((res) => {
 	      let json_str = null;
@@ -117,15 +115,11 @@ export const useRecordVoice = (props) => {
 	  console.log("audioMimeType = " + audioMimeType);
 	  setAudioMimeType(audioMimeType);      
 	  
-	  const audioBlob = new Blob(chunks.current, { type: "audio/wav" });
+	  const audioBlob = new Blob(chunks.current, { type: audioMimeType });
 	  blobToBase64(audioBlob, getText);
       };
 
-      console.log(mediaRecorder);
-      
-      setMediaRecorder(mediaRecorder);
-
-      
+      setMediaRecorder(mediaRecorder);      
   };
 
   useEffect(() => {

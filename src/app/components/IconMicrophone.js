@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+//import React, { useState } from 'react';
 
 const IconMicrophone = (props) => {
-    
+    /*
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isHover, setIsHover] = useState(false);
     
@@ -24,18 +24,21 @@ const IconMicrophone = (props) => {
     
     const containerStyle = {
         backgroundColor: isMouseDown ? 'rgb(230,10,10)' : isHover ? 'hsl(195, 53%, 84%)' : 'hsl(195, 53%, 79%)', // lightblue
-        padding: '8px',
+        //padding: '8px',
     };
-
-    return (
-	    <div className="microphone-svg" style={containerStyle}
+    */
+    
+    /*                              style={containerStyle}
                  onMouseEnter={handleMouseEnter}
                  onMouseLeave={handleMouseLeave}
                  onMouseDown={handleMouseDown}
                  onMouseUp={handleMouseUp}
                  onTouchStart={handleMouseDown}
                  onTouchEnd={handleMouseUp}
-	    >
+
+    */
+    return (
+	    <div className="microphone-svg">
 	      <div className="microphone-svg-container">
 	        <svg xmlns="http://www.w3.org/2000/svg"
 	             data-name="Layer 1"
