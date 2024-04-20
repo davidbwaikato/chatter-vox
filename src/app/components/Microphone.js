@@ -72,7 +72,7 @@ const Microphone = (props) => {
     
     return (
       <div className="flex flex-col justify-center items-center">
-	    <p>{tm_how_to_record_[lang_]}</p>
+	    <p className="textmessage">{tm_how_to_record_[lang_]}</p>
         <button className="border-none bg-transparent w-10 rounded-full" style={containerStyle}
                  onMouseEnter={handleMouseEnter}
                  onMouseLeave={handleMouseLeave}
@@ -84,7 +84,7 @@ const Microphone = (props) => {
           <IconMicrophone micLevel={micLevel} />
         </button>
 	<p style={micLevelStyle} >Mic level: {micLevel}</p>
-	<p>{text}</p>
+	<p className="textmessage">{text}</p>
 
       </div>
   );

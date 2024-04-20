@@ -69,8 +69,8 @@ async function POST_REAL(req) {
 
 export async function POST(req) {
 
-    //const returned_response = await POST_FAKE(req);
-    const returned_response = await POST_REAL(req);
+    const returned_response = await POST_FAKE(req);
+    //const returned_response = await POST_REAL(req);
 
     return returned_response;
 }
