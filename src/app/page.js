@@ -10,11 +10,12 @@ import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
 
 import { AudioVisualizer }         from "@/app/components/AudioVisualizer";
 import { LiveAudioVisualizer }     from "@/app/components/LiveAudioVisualizer";
+//import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
+
 import { AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
+import { MediaPlayer } from "@/app/components/AudioSpectrumVisualizer/MediaPlayer";
 
-import { MediaPlayer } from "@/app/components/AudioSpectrumVisualizer/utils";
-
-export default function HomeProd() {
+export default function Home() {
 //function HomeProd() {
 
     //const [isAudioPlayerLoaded, setAudioPlayerLoaded] = useState(false);
