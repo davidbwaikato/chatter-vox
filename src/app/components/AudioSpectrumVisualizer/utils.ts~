@@ -1,0 +1,8 @@
+
+class MediaPlayer {
+  public state: string;
+  
+  public constructor(state: string) {
+    this.state = "inactive";
+  }
+}

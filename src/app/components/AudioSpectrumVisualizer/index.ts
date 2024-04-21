@@ -1,0 +1,1 @@
+export { AudioSpectrumVisualizer } from "./AudioSpectrumVisualizer";
