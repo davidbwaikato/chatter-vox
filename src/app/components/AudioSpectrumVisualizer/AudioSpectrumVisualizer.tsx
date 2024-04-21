@@ -94,17 +94,32 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   minDecibels = -90,
   smoothingTimeConstant = 0.4,
 }: Props) => {
-  const [context] = useState(() => new AudioContext());
+   const [context] = useState(() => new AudioContext());
+  //const [context, setContext] = useState<AudioContext>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
       console.log(`useEffect() blob defined = ${blob ? 1 : 0}`);      
 	
-    //if (!mediaRecorder.stream) return;
     if (!blob) return;
 
+      /*
+      console.log("mediaPlayer.state = " + mediaPlayer.state)
+      if (mediaPlayer.state === "initializing") {
+	  console.log("Initializing AudioSpectruVisualizer");
+	  report();
+	  mediaPlayer.state = "inactive";
 
+	  return;
+      }
+      else {      
+	  if (!context) {
+	      setContext(new AudioContext());
+	  }
+      }
+      */
+      
     //console.log('blob:'); console.log(blob);
     const connectAsSourceSync = async (audioBlob) => {
 	const arrayBuffer = await audioBlob.arrayBuffer();
@@ -133,13 +148,13 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
             source.stop(0);
 	}
 	
-	console.log("mediaPlayer.state = " + mediaPlayer.state)
 	if (mediaPlayer.state === "inactive") {
-	    console.log("Starting source");
-	    //source.start();
-	    mediaPlayer.state = "playing";
+	    //if (navigator.userActivation.isActive) {
+		console.log("Starting source");
+		source.start();
+		mediaPlayer.state = "playing";
+	    //}
 	}
-	source.start();	
       	
     }
 
@@ -186,20 +201,19 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     const data = new Uint8Array(analyser?.frequencyBinCount);
     //console.log(` data.length = ${data.length}`);
     //console.log(` data.slice(0,100) = ${data.slice(0,100)}`);
-      
-    if (mediaPlayer.state === "playing") {
+
+    if (mediaPlayer.state === "initializing") {
+      processFrequencyData(data);	  
+    } else if (mediaPlayer.state === "playing") {
       analyser?.getByteFrequencyData(data);
       processFrequencyData(data);
       requestAnimationFrame(report);
     } else if (mediaPlayer.state === "paused") {
       processFrequencyData(data);
-    } else if (
-      mediaPlayer.state === "inactive" &&
-      context.state !== "closed"
-    ) {
+    } else if (mediaPlayer.state === "inactive" && context.state !== "closed") {
       context.close();
     }
-  }, [analyser, context.state]);
+  }, [analyser, context ? context.state : null]);
 
   const processFrequencyData = (data: Uint8Array): void => {
     if (!canvasRef.current) return;

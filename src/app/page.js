@@ -20,7 +20,7 @@ export default function HomeProd() {
     //const [isAudioPlayerLoaded, setAudioPlayerLoaded] = useState(false);
     const [audioFilename, setAudioFilename] = useState(null);
 
-    const [blob, setBlob] = useState(); // <Blob>
+    const [blob, setBlob] = useState(null); // <Blob>
 
     const mediaPlayer = new MediaPlayer();
 
@@ -47,7 +47,27 @@ export default function HomeProd() {
 
 	*/
     }
+
+    useEffect(() => {
     
+	const audioSilenceURL = "/default-audio-silence.mp3";
+	
+	window.fetch(audioSilenceURL)
+	    .then(response => {
+		if (response.ok) {
+		    return response.blob();
+		}
+		throw new Error('Failed to retrieve: ' + audioSilenceURL);
+	    })
+	    .then(audioBlob => {
+		setBlob(audioBlob);
+	    })
+	    .catch(function(error) {
+		console.log('There has been a problem with your fetch operation: ', error.message);
+	    });
+    }, [])
+
+
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
 	      <div style={{width: "90%", maxWidth: "900px"}}>

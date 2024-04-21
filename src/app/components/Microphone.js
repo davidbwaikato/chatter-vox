@@ -66,7 +66,7 @@ const Microphone = (props) => {
     
     return (
       <div className="flex flex-col justify-center items-center p-3">
-        <button className="border-none bg-transparent w-10 rounded-full" style={containerStyle}
+        <button className="border-none bg-transparent w-14 rounded-full" style={containerStyle}
                  onMouseEnter={handleMouseEnter}
                  onMouseLeave={handleMouseLeave}
                  onMouseDown={handleMouseDown}
