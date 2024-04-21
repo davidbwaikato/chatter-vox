@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 async function POST_FAKE(req) {
     const response_data = {
-	recognizedTextData: { text: 'Testing, testing, one, two, three.' },
+	recognizedTextData: { text: '[Fake text response -- Testing, testing, one, two, three.]' },
 	recordedAudioFilename: 'public/tmp/spoken-audio.webm'
     };
 

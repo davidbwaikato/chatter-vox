@@ -42,7 +42,7 @@ export const useRecordVoice = (props) => {
     };
     
     
-    const getText = async (base64data, mimeType) => {
+    const getText = async (blob, base64data, mimeType) => {
       try {
 	  const response = await fetch("/api/speechToText", {
               method: "POST",
@@ -68,7 +68,7 @@ export const useRecordVoice = (props) => {
 	      setText("Recognised text: " + text);
 	      setAudioFilename(audioFilename);
 
-	      props.pageAudioFilenameCallback(audioFilename);
+	      props.pageAudioFilenameCallback(audioFilename,blob,mimeType);
 	  }
       }
       catch (error) {

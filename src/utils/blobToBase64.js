@@ -5,7 +5,7 @@ const blobToBase64 = (blob, callback) => {
     reader.onload = function () {
 	const type = blob.type;
 	const base64data = reader?.result?.split(",")[1];
-	callback(base64data,type);
+	callback(blob,base64data,type);
     };
     reader.readAsDataURL(blob);
 };

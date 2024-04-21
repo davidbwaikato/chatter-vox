@@ -63,16 +63,9 @@ const Microphone = (props) => {
         display: 'none'
     };
 
-    /*
-                onMouseDown={startRecording}
-                onMouseUp={stopRecording}
-                onTouchStart={startRecording}
-                onTouchEnd={stopRecording}
-    */
     
     return (
-      <div className="flex flex-col justify-center items-center">
-	    <p className="textmessage">{tm_how_to_record_[lang_]}</p>
+      <div className="flex flex-col justify-center items-center p-3">
         <button className="border-none bg-transparent w-10 rounded-full" style={containerStyle}
                  onMouseEnter={handleMouseEnter}
                  onMouseLeave={handleMouseLeave}
@@ -83,6 +76,8 @@ const Microphone = (props) => {
                  onContextMenu={(e)=> e.preventDefault()} >
           <IconMicrophone micLevel={micLevel} />
         </button>
+	<p className="textmessage">{tm_how_to_record_[lang_]}</p>
+	    
 	<p style={micLevelStyle} >Mic level: {micLevel}</p>
 	<p className="textmessage">{text}</p>
 
