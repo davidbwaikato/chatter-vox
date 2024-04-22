@@ -41,6 +41,87 @@ export const useRecordVoice = (props) => {
             setRecording(false);
 	}
     };
+
+    const getSynthesizedSpeech = async (text) => {
+	try {
+	    const response = await fetch("/api/textToSpeech", {
+		method: "POST",
+		headers: {
+		    "Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+		    text: text
+		}),
+	    }).then((res) => {
+		let json_str = null;
+		if (res.status == 200) {
+		    json_str = res.json();
+		}
+		return json_str;
+	    });
+
+	    console.log("getSynthesizedSpeech() API Response:")
+	    console.log(response);
+	    
+	    if (response != null) {
+		const synthesizedAudioFilename = response.synthesizedAudioFilename;
+		//const synthesizedAudioBlob     = response.synthesizedAudioBlob;
+		const synthesizedAudioMimeType = response.synthesizedAudioMimeType;
+	    
+		console.log("synthesizedAudioFilename: " + synthesizedAudioFilename);
+
+		const synthesizedAudioURL = synthesizedAudioFilename.replace(/public/,"")
+		
+		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
+		      .then(response => response.blob());
+		console.log("[useRecordVoice.js] synthesizedAudioBlob:");
+		console.log(synthesizedAudioBlob);
+		
+		setAudioFilename(synthesizedAudioFilename);		
+		props.pageAudioFilenameCallback(synthesizedAudioFilename,synthesizedAudioBlob,synthesizedAudioMimeType);
+
+	    }
+	}
+	catch (error) {
+	    console.log(error);
+	}
+    };
+
+
+    
+    const getPromptResponse = async (promptText) => {
+	try {
+	    const response = await fetch("/api/chatGPT", {
+		method: "POST",
+		headers: {
+		    "Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+		    promptText: promptText
+		}),
+	    }).then((res) => {
+		let json_str = null;
+		if (res.status == 200) {
+		    json_str = res.json();
+		}
+		return json_str;
+	    });
+
+	    //console.log(response);
+	    
+	    if (response != null) {
+		const result = response.result;
+		console.log(result);
+		const chatResponseText = result.content;	    
+		setText("ChatGPT response: " + chatResponseText);
+
+		getSynthesizedSpeech(chatResponseText);		
+	    }
+	}
+	catch (error) {
+	    console.log(error);
+	}
+    };
     
     
     const getText = async (blob, base64data, mimeType) => {
@@ -69,7 +150,9 @@ export const useRecordVoice = (props) => {
 	      setText("Recognised text: " + text);
 	      setAudioFilename(audioFilename);
 
-	      props.pageAudioFilenameCallback(audioFilename,blob,mimeType);
+	      //props.pageAudioFilenameCallback(audioFilename,blob,mimeType);
+
+	      getPromptResponse(text);
 	  }
       }
       catch (error) {
@@ -117,6 +200,8 @@ export const useRecordVoice = (props) => {
 	  setAudioMimeType(audioMimeType);      
 	  
 	  const audioBlob = new Blob(chunks.current, { type: audioMimeType });
+	  console.log("mediaRecorder.onstop()");
+	  console.log(audioBlob);
 	  blobToBase64(audioBlob, getText);
       };
 

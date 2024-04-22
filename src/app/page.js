@@ -29,13 +29,13 @@ export default function Home() {
     const mediaPlayerHeight = 120;
     
     const audioFilenameCallback = (recordedAudioFilename, recordedBlob, recordedMimeType) => {
-	console.log("recordedAudioFilename = " + recordedAudioFilename)
+	console.log("[page.js] recordedAudioFilename = " + recordedAudioFilename)
 	
 	const recordedAudioURL = recordedAudioFilename.replace(/public/, "");
 	
 	setAudioFilename(recordedAudioFilename);
 	mediaPlayer.state = "start-playing";
-	console.log("Setting blob to recorded Audio");
+	console.log("[page.js] Setting blob to recorded Audio");
 	setBlob(recordedBlob);
 
 	/*

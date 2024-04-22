@@ -13,7 +13,8 @@ const openai = new OpenAI({
 
 async function POST_FAKE(req) {
     const response_data = {
-	recognizedTextData: { text: '[Fake text response -- Testing, testing, one, two, three.]' },
+	//recognizedTextData: { text: '[Fake text response -- Testing, testing, one, two, three.]' },
+	recognizedTextData: { text: 'What is the name of the river that flows through Hamilton, New Zealand?' },
 	recordedAudioFilename: 'public/tmp/spoken-audio.webm'
     };
 
@@ -69,8 +70,8 @@ async function POST_REAL(req) {
 
 export async function POST(req) {
 
-    const returned_response = await POST_FAKE(req);
-    //const returned_response = await POST_REAL(req);
+    //const returned_response = await POST_FAKE(req);
+    const returned_response = await POST_REAL(req);
 
     return returned_response;
 }
@@ -81,6 +82,7 @@ export async function POST(req) {
 //
 // For more details, see:
 //   https://stackoverflow.com/questions/63968953/why-do-i-get-a-502-gateway-error-from-nextjs-app-hosted-on-firebase-for-post-r
+
 export const config = {
   api: {
       // Disables call to body parsing module, to prevent the
