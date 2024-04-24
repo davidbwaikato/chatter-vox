@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect  } from 'react';
 
-import { Visualizer } from "@/app/components/Visualizer";
 import { Microphone } from "@/app/components/Microphone";
 
 import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
@@ -15,6 +14,22 @@ import { LiveAudioVisualizer }     from "@/app/components/LiveAudioVisualizer";
 import { AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 import { MediaPlayer } from "@/app/components/AudioSpectrumVisualizer/MediaPlayer";
 
+/*
+const RouterOptions = {
+    fakeSpeechToText: true,
+    fakeChatGPT:      true,
+    fakeTextToSpeech: true
+};
+*/
+
+
+const RouterOptions = {
+    fakeSpeechToText: false,
+    fakeChatGPT:      false,
+    fakeTextToSpeech: false
+};
+
+
 export default function Home() {
 //function HomeProd() {
 
@@ -25,7 +40,7 @@ export default function Home() {
 
     const mediaPlayer = new MediaPlayer();
 
-    const mediaPlayerWidth  = 600;
+    const mediaPlayerWidth  = 400;
     const mediaPlayerHeight = 120;
     
     const audioFilenameCallback = (recordedAudioFilename, recordedBlob, recordedMimeType) => {
@@ -78,17 +93,20 @@ export default function Home() {
 	               style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px'}}>
 	            {blob && (
 		      <AudioSpectrumVisualizer
-		        mediaPlayer={mediaPlayer}
-		        blob={blob}
-		        width={mediaPlayerWidth}
-		        height={mediaPlayerHeight}
-		        barWidth={3}
-		        gap={2}
-		        barColor={'lightblue'}
+		         mediaPlayer={mediaPlayer}
+		         blob={blob}
+		         width={mediaPlayerWidth}
+		         height={mediaPlayerHeight}
+		         barWidth={3}
+		         gap={2}
+		         barColor={'lightblue'}
 		      />
 		    )}
 	          </div>
-	          <Microphone pageAudioFilenameCallback={audioFilenameCallback} />
+	          <Microphone
+	             routerOptions={RouterOptions}
+	             pageAudioFilenameCallback={audioFilenameCallback}
+	          />
                 </div>
 	      </div>
 	    </main>

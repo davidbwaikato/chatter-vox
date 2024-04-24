@@ -8,6 +8,8 @@ import { env } from "../../config/env";
 
 import { OpenAI } from "openai";
 
+import { sleep } from "../utils";
+
 dotenv.config();
 
 const openai = new OpenAI({
@@ -17,13 +19,14 @@ const openai = new OpenAI({
 
 async function POST_FAKE(req) {
     const response_data = {
-	//result: { content: "Here is my answer!" }
 	result: {
 	    role: "assistant",
-	    content: "The river that flows through Hamilton, New Zealand is the Waikato River. [Faked Response]"
+	    content: "The river that flows through Hamilton, New Zealand is the Waikato River. [Hardwired Response]"
 	}
     };
 
+    await sleep(2000);
+		
     return NextResponse.json(response_data);
 }
 /*
@@ -84,10 +87,22 @@ async function POST_REAL(req) {
     }    
 }
 
-export async function POST(req) {
+export async function POST(req)
+{
+    /*
+    const body = await req.json();
+    const routerOptions = body.routerOptions;
 
-    //const returned_response = await POST_FAKE(req);
+    let returned_response = null;
+    if (routerOptions.fakeChatGPT) {
+	returned_response = await POST_FAKE(req);
+    }
+    else {
+	returned_response = await POST_REAL(req);
+    }
+    */
+    
     const returned_response = await POST_REAL(req);
-
+    
     return returned_response;
 }

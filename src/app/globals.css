@@ -20,13 +20,33 @@ p.textmessage {
 }
 
 
-.microphone-level {
+.microphone-level-inside-gray {
     position: absolute;
-    /* display: none; */
     bottom: 0;
-    left: 25%;
+    left: 25%; 
     width: 50%;
     height: 0%;
-    background-color: rgba(128,128,128,0.5);
+    background-color: rgba(128,128,128,0.5); 
+}
+
+
+.microphone-level-inside {
+    position: absolute;
+    bottom: 35%;
+    left: 30%; 
+    width: 40%;
+    height: 0%;
+    background-color: rgba(0,0,0,1.0); 
+}
+
+
+.microphone-level {
+    border-bottom: 1px black solid;
+    position: absolute;
+    bottom: 0;
+    right: -60%; 
+    width: 30%;
+    height: 0%;
+    background-color: rgba(230,10,10,1.0);
 }
 

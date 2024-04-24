@@ -8,23 +8,28 @@ import { env } from "../../config/env";
 
 import OpenAI from "openai";
 
+import { sleep } from "../utils";
+
 dotenv.config();
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
 
-async function POST_FAKE(req) {
+async function POST_FAKE(body) {
+
     const response_data = {
 	synthesizedAudioFilename: 'public/tmp/fake-synthesized-audio.mp3',
 	synthesizedAudioBlob: null
     };
 
+    // Small delay so it feels like some work has been done!
+    await sleep(1000);
+    
     return NextResponse.json(response_data);
 }
 
-async function POST_REAL(req) {
-    const body = await req.json();
+async function POST_REAL(body) {
     const text = body.text;
     
     const audioFileType = "mp3";
@@ -57,8 +62,8 @@ async function POST_REAL(req) {
 	    response_format: audioFileType
 	});
 
-	console.log("OpenAI returned audio:");
-	console.log(audio);
+	//console.log("OpenAI returned audio:");
+	//console.log(audio);
 	
 	const buffer = Buffer.from(await audio.arrayBuffer());
 	console.log(`Saving synthesized audio as: ${audioFilePath}`);
@@ -85,11 +90,19 @@ async function POST_REAL(req) {
     }
 }
 
-export async function POST(req) {
+export async function POST(req)
+{    
+    const body = await req.json();
+    const routerOptions = body.routerOptions;
 
-    //const returned_response = await POST_FAKE(req);
-    const returned_response = await POST_REAL(req);
-
+    let returned_response = null;
+    if (routerOptions.fakeTextToSpeech) {
+	returned_response = await POST_FAKE(body);
+    }
+    else {
+	returned_response = await POST_REAL(body);
+    }      
+    
     return returned_response;
 }
 

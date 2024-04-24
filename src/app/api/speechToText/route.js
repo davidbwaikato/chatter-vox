@@ -11,9 +11,8 @@ const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
 
-async function POST_FAKE(req) {
+async function POST_FAKE(body) {
     const response_data = {
-	//recognizedTextData: { text: '[Fake text response -- Testing, testing, one, two, three.]' },
 	recognizedTextData: { text: 'What is the name of the river that flows through Hamilton, New Zealand?' },
 	recordedAudioFilename: 'public/tmp/spoken-audio.webm'
     };
@@ -21,8 +20,7 @@ async function POST_FAKE(req) {
     return NextResponse.json(response_data);
 }
 
-async function POST_REAL(req) {
-    const body = await req.json();
+async function POST_REAL(body) {
     const base64Audio = body.audio;
     const audioMimeType = body.mimeType;
     
@@ -68,10 +66,21 @@ async function POST_REAL(req) {
     }
 }
 
-export async function POST(req) {
+export async function POST(req)
+{
+    const body = await req.json();
+    const routerOptions = body.routerOptions;
 
-    //const returned_response = await POST_FAKE(req);
-    const returned_response = await POST_REAL(req);
+    console.log("speechToText routerOptions");
+    console.log(routerOptions)
+    
+    let returned_response = null;
+    if (routerOptions.fakeSpeechToText) {
+	returned_response = await POST_FAKE(body);
+    }
+    else {
+	returned_response = await POST_REAL(body);
+    }
 
     return returned_response;
 }

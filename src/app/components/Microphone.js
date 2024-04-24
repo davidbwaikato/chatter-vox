@@ -76,7 +76,7 @@ const Microphone = (props) => {
                  onContextMenu={(e)=> e.preventDefault()} >
           <IconMicrophone micLevel={micLevel} />
         </button>
-	<p className="textmessage">{tm_how_to_record_[lang_]}</p>
+	<p className="textmessage italic">{tm_how_to_record_[lang_]}</p>
 	    
 	<p style={micLevelStyle} >Mic level: {micLevel}</p>
 	<p className="textmessage">{text}</p>
