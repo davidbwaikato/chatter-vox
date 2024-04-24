@@ -50,7 +50,8 @@ export const useRecordVoice = (props) => {
 		    "Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-		    text: text
+		    text: text,
+		    routerOptions: props.routerOptions
 		}),
 	    }).then((res) => {
 		let json_str = null;
@@ -90,6 +91,8 @@ export const useRecordVoice = (props) => {
 
     
     const getPromptResponse = async (promptText) => {
+	setText("Recognized text: " + promptText + " => Now being processing by ChatGPT");
+	
 	try {
 	    const response = await fetch("/api/chatGPT", {
 		method: "POST",
@@ -97,7 +100,8 @@ export const useRecordVoice = (props) => {
 		    "Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-		    promptText: promptText
+		    promptText: promptText,
+		    routerOptions: props.routerOptions		    
 		}),
 	    }).then((res) => {
 		let json_str = null;
@@ -117,8 +121,13 @@ export const useRecordVoice = (props) => {
 
 		getSynthesizedSpeech(chatResponseText);		
 	    }
+	    else {
+		setText("No response received from ChatGPT");
+	    }
+	    
 	}
 	catch (error) {
+	    setText("A network error occured when trying to process the recognized text");
 	    console.log(error);
 	}
     };
@@ -133,7 +142,8 @@ export const useRecordVoice = (props) => {
               },
               body: JSON.stringify({
 		  audio: base64data,
-		  mimeType: mimeType
+		  mimeType: mimeType,
+		  routerOptions: props.routerOptions		  
               }),
 	  }).then((res) => {
 	      let json_str = null;
@@ -161,6 +171,9 @@ export const useRecordVoice = (props) => {
   };
 
   const initialMediaRecorder = (stream) => {
+      const sampleRate = stream.getAudioTracks()[0].getSettings().sampleRate;
+      console.log("***** Audio sampleRate = " + sampleRate);
+      
       const mediaRecorder = new MediaRecorder(stream);
 
       mediaRecorder.onstart = () => {
@@ -209,12 +222,12 @@ export const useRecordVoice = (props) => {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(initialMediaRecorder);
-    }
+      if (typeof window !== "undefined") {
+	  navigator.mediaDevices
+              .getUserMedia({ audio: true })
+              .then(initialMediaRecorder);
+      }
   }, []);
-
+    
     return { recording, startRecording, stopRecording, micLevel, text, audioFilename };
 };
