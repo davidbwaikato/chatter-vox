@@ -8,8 +8,8 @@ import { Microphone } from "@/app/components/Microphone";
 //import { LiveAudioVisualizer }     from "@/app/components/LiveAudioVisualizer";
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
-const DEBUG = true;
-//const DEBUG = false;
+//const DEBUG = true;
+const DEBUG = false;
 
 const RouterOptions = DEBUG ?
       {
@@ -44,7 +44,7 @@ export default function Home()
     });
 
     const mediaPlayerWidth  = 400;
-    const mediaPlayerHeight = 120;
+    const mediaPlayerHeight = 180;
 
     const updateStatusCallback = (text) => {
 	setStatusText(text)
@@ -90,6 +90,7 @@ export default function Home()
 	          </div>	    	    
 
                   <div>
+                  <div style={{width: '40px', float: 'right'}} >
                     <button className="border-none bg-transparent w-10 rounded-full">
                       <svg xmlns="http://www.w3.org/2000/svg"
                            id="rewind"
@@ -153,7 +154,7 @@ export default function Home()
                     </button>
                   </div>
 	          <div className="border border-black border-solid"
-	               style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px'}}>
+	style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px', float: 'left'}}>
 		      <AudioSpectrumVisualizer
 		        mediaPlayer={mediaPlayer}
 	                blob={blob}
@@ -165,8 +166,9 @@ export default function Home()
 		        gap={2}
 		        barColor={'lightblue'}
 		      />
-	          </div>
-	    <div className="textmessage text-sm p-2 mt-0 italic" style={{width: mediaPlayerWidth+'px', backgroundColor: "#F0F0F0"}} >
+	</div>
+        </div>
+	          <div className="textmessage text-sm p-2 mt-0 italic" style={{width: mediaPlayerWidth+'px', backgroundColor: "#F0F0F0"}} >
 	            {statusText}
 	          </div>
 	    
