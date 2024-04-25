@@ -8,9 +8,9 @@ import {
 
 import { calculateBarData, draw } from "../LiveAudioVisualizer/utils";
 
-import { MediaPlayer } from "./MediaPlayer";
+//import { MediaPlayer } from "./MediaPlayer";
 
-/*
+
 // Inspired by MediaRecorder, MediaPlayer is a class that
 // is used to to keep state of what is happening in terms
 // of the playing audio
@@ -18,16 +18,17 @@ import { MediaPlayer } from "./MediaPlayer";
 class MediaPlayer {
   public state: string;
   
-  public constructor() {
+  public constructor(onstopcallback) {
       this.state = "inactive";
-      //this.state = "initializing";
-  }
 
+      this.onstopplaying = onstopcallback;
+  }
+    /*
   public setState(state: string) {
       othis.state = state;
   }
-}
 */
+}
 
 export interface Props {
   /**
@@ -116,14 +117,54 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   smoothingTimeConstant = 0.4,
 }: Props) => {
    const [context] = useState(() => new AudioContext());
-  //const [context, setContext] = useState<AudioContext>(null);
+    //const [context, setContext] = useState<AudioContext>(null);
+  //const [playing, setPlaying]   = useState<bool>(false);
   const [analyser, setAnalyser] = useState<AnalyserNode>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const playingRef = useRef<bool>(false);
+
+    /*
   useEffect(() => {
-      console.log(`useEffect() blob defined = ${blob ? 1 : 0}`);      
-	
-    if (!blob) return;
+      console.log(`useEffect() [], blob defined = ${blob ? defined : undefined}`);
+      
+      // onComponentMount/update
+      
+      if (!blob) {
+          const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
+            max: 0,
+            min: 0,
+          }));
+	  const data = new Uint8Array(dataZeros);	  
+	  processFrequencyData(data);
+	  / *
+	  draw(
+	      dataZeros,
+	      canvasRef.current,
+	      barWidth,
+	      gap,
+	      backgroundColor,
+	      barColor
+	  ); * /
+	  return;
+        }      
+  },[]);
+    */
+    
+  useEffect(() => {
+      console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);      
+      console.log(blob);
+      
+      if (!blob) {
+          const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
+              max: 0,
+              min: 0,
+          }));
+	  const data = new Uint8Array(dataZeros);	  
+	  processFrequencyData(data);
+
+	  return;
+      }
 
       /*
       console.log("mediaPlayer.state = " + mediaPlayer.state)
@@ -142,7 +183,14 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       */
       
     //console.log('blob:'); console.log(blob);
-    const connectAsSourceSync = async (audioBlob) => {
+      const connectAsSourceSync = async (audioBlob) => {
+	  console.log("Converting blob to AudioData and setting up Analyzer")
+
+	if (context.state === "suspended") {
+	    context.resume();
+	}
+	      
+	  
 	const arrayBuffer = await audioBlob.arrayBuffer();
 	//console.log('arrayBuffer:'); console.log(arrayBuffer)
 
@@ -166,20 +214,33 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
 	source.onended = function() {
 	    console.log("Playing sound has ended");
-            source.stop(0);
+            source.stop(0);	    
+	    mediaPlayer.state = "inactive"; // ****
+	    playingRef.current = false;
+
+	    if (context.state !== "suspended") {
+		context.suspend();
+	    }
+
+	    mediaPlayer.onstopplaying();
 	}
 	
 	if (mediaPlayer.state === "inactive") {
 	    //if (navigator.userActivation.isActive) {
 		console.log("Starting source");
-		source.start();
+	        source.start();
+	        console.log("*** Setting mediaPlayer.state = 'playing'");
 		mediaPlayer.state = "playing";
 	    //}
 	}
       	
     }
 
-    connectAsSourceSync(blob);
+    if (!playingRef.current) {
+	playingRef.current = true;
+	connectAsSourceSync(blob);
+    }
+      
 
       //  https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
       /*
@@ -209,20 +270,25 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   }, [blob]);
 
   useEffect(() => {
-      console.log(`useEffect() analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);
+      console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);
     if (analyser && mediaPlayer.state === "playing") {
       report();
     }
   }, [analyser, mediaPlayer.state]);
 
   const report = useCallback(() => {
-      //console.log(`**** report() -- analyser = ${analyser ? 1 : 0}`);
+      console.log(`**** report() -- analyser = ${analyser ? 1 : 0}`);
     if (!analyser) return;
 
     const data = new Uint8Array(analyser?.frequencyBinCount);
+    
+    //const dataOrig = new Uint8Array(analyser?.frequencyBinCount);
     //console.log(` data.length = ${data.length}`);
     //console.log(` data.slice(0,100) = ${data.slice(0,100)}`);
-
+    // //const data = dataOrig.slice(2,8)
+    // //const data = dataOrig.slice(2,16)
+    //const data = dataOrig;
+    
     if (mediaPlayer.state === "initializing") {
       processFrequencyData(data);	  
     } else if (mediaPlayer.state === "playing") {
@@ -231,10 +297,15 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       requestAnimationFrame(report);
     } else if (mediaPlayer.state === "paused") {
       processFrequencyData(data);
-    } else if (mediaPlayer.state === "inactive" && context.state !== "closed") {
-      context.close();
     }
-  }, [analyser, context ? context.state : null]);
+      /*
+      else if (mediaPlayer.state === "inactive" && context.state !== "closed") {
+	//context.close();
+	//context.suspend();
+	}*/
+      
+  //}, [analyser, context ? context.state : null]);
+  }, [analyser, context.state ]);    
 
   const processFrequencyData = (data: Uint8Array): void => {
     if (!canvasRef.current) return;
@@ -267,5 +338,5 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   );
 };
 
-export { AudioSpectrumVisualizer };
-//export { MediaPlayer, AudioSpectrumVisualizer };
+//export { AudioSpectrumVisualizer };
+export { MediaPlayer, AudioSpectrumVisualizer };

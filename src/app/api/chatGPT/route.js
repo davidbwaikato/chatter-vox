@@ -17,7 +17,8 @@ const openai = new OpenAI({
 });
 
 
-async function POST_FAKE(req) {
+async function POST_FAKE(body) {
+    
     const response_data = {
 	result: {
 	    role: "assistant",
@@ -51,9 +52,8 @@ function OLD() {
 }
 */
 
-async function POST_REAL(req) {
+async function POST_REAL(body) {
 
-    const body = await req.json();
     const promptText = body.promptText;
 
     console.log(`promptText = ${promptText}`);
@@ -89,20 +89,17 @@ async function POST_REAL(req) {
 
 export async function POST(req)
 {
-    /*
+    
     const body = await req.json();
     const routerOptions = body.routerOptions;
 
     let returned_response = null;
     if (routerOptions.fakeChatGPT) {
-	returned_response = await POST_FAKE(req);
+	returned_response = await POST_FAKE(body);
     }
     else {
-	returned_response = await POST_REAL(req);
+	returned_response = await POST_REAL(body);
     }
-    */
-    
-    const returned_response = await POST_REAL(req);
     
     return returned_response;
 }

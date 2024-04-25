@@ -1,1 +1,1 @@
-export { AudioSpectrumVisualizer } from "./AudioSpectrumVisualizer";
+export { MediaPlayer, AudioSpectrumVisualizer } from "./AudioSpectrumVisualizer";

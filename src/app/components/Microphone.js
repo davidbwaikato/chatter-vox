@@ -6,7 +6,7 @@ import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
 
 const Microphone = (props) => {    
-    const { recording, startRecording, stopRecording, micLevel, text, audioFilename } = useRecordVoice(props);
+    const { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, statusText, audioFilename } = useRecordVoice(props);
 
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isHover,     setIsHover]     = useState(false);
@@ -74,7 +74,7 @@ const Microphone = (props) => {
                  onTouchStart={handleMouseDown}
                  onTouchEnd={handleMouseUp}
                  onContextMenu={(e)=> e.preventDefault()} >
-          <IconMicrophone micLevel={micLevel} />
+            <IconMicrophone micLevel={micLevelCapped} micLevelCliprect={micLevelCliprect} />
         </button>
 	<p className="textmessage italic">{tm_how_to_record_[lang_]}</p>
 	    

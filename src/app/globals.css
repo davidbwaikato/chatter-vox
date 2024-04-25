@@ -41,12 +41,25 @@ p.textmessage {
 
 
 .microphone-level {
-    border-bottom: 1px black solid;
+    border: 1px black solid;
     position: absolute;
     bottom: 0;
-    right: -60%; 
     width: 30%;
-    height: 0%;
-    background-color: rgba(230,10,10,1.0);
+    height: 100%;
+    clip-rect: xywh(0 100% 100% 0);
+    
+    background-image:  linear-gradient(to top, lightgreen, lightgreen, red); 
+    /*background-color:  rgba(220,10,10,1); */
+}
+
+
+.microphone-level-left {
+    left: -60%; 
+}
+
+
+
+.microphone-level-right {
+    right: -60%; 
 }
 

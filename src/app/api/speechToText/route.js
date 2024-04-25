@@ -70,9 +70,6 @@ export async function POST(req)
 {
     const body = await req.json();
     const routerOptions = body.routerOptions;
-
-    console.log("speechToText routerOptions");
-    console.log(routerOptions)
     
     let returned_response = null;
     if (routerOptions.fakeSpeechToText) {
