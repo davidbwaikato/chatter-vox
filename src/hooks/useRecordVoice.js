@@ -40,9 +40,23 @@ export const useRecordVoice = (props) => {
 	    "audio/ogg;codecs=opus",
 	    "audio/webm;codecs=opus",
 	    "audio/ogg",
-	    "audio/webm"
+	    "audio/webm",
+	    "audio/mp4;codecs=mp4a"
 	];
 
+	/*
+
+-- Top supported Video :  video/mp4;codecs=avc1
+-- Top supported Audio :  undefined
+-- All supported Videos :  [
+  "video/mp4;codecs=avc1",
+  "video/mp4;codecs=AVC1",
+  "video/mp4;codecs=mp4a",
+  "video/mp4;codecs=MP4A",
+  "video/mp4"
+]
+-- All supported Audios :  []
+	 */
 	let return_format = "";
 	
 	for (const format of supported_formats) {
@@ -71,7 +85,9 @@ export const useRecordVoice = (props) => {
 		setStatusTextCallback("Recording ...");
 		
 		isRecording.current = true;
-		mediaRecorder.start();
+		// Controlling the timeslice to .start() to be 1000, based on OpenAI Whisper <=> Safari issue
+		//   https://community.openai.com/t/whisper-problem-with-audio-mp4-blobs-from-safari/322252
+		mediaRecorder.start(1000);
 		setRecording(true);
 	    }
 	}
