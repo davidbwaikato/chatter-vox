@@ -8,8 +8,6 @@ import {
 
 import { calculateBarData, draw } from "../LiveAudioVisualizer/utils";
 
-//import { MediaPlayer } from "./MediaPlayer";
-
 
 // Inspired by MediaRecorder, MediaPlayer is a class that
 // is used to to keep state of what is happening in terms
@@ -36,6 +34,7 @@ export interface Props {
    */
   mediaPlayer: MediaPlayer;
   blob: Blob;
+  context: AudioContext;
     
   /**
    * Width of the visualization. Default" "100%"
@@ -104,7 +103,8 @@ export interface Props {
 const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   mediaPlayer,
   blob,
-    
+  context,  
+   
   width = "100%",
   height = "100%",
   barWidth = 2,
@@ -116,8 +116,8 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   minDecibels = -90,
   smoothingTimeConstant = 0.4,
 }: Props) => {
-   const [context] = useState(() => new AudioContext());
-    //const [context, setContext] = useState<AudioContext>(null);
+   //const [context] = useState(() => new AudioContext());
+   // //const [context, setContext] = useState<AudioContext>(null);
   //const [playing, setPlaying]   = useState<bool>(false);
   const [analyser, setAnalyser] = useState<AnalyserNode>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -153,7 +153,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     
   useEffect(() => {
       console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);      
-      console.log(blob);
+      //console.log(blob);
       
       if (!blob) {
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
@@ -165,7 +165,17 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
 	  return;
       }
-
+/*
+      if (!context) {
+	  //if (navigator.userActivation.isActive) {
+	      setContext(new AudioContext());
+	  //}
+	  //else {
+	  //    return;
+	  //}
+      }
+*/
+      
       /*
       console.log("mediaPlayer.state = " + mediaPlayer.state)
       if (mediaPlayer.state === "initializing") {
@@ -277,7 +287,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   }, [analyser, mediaPlayer.state]);
 
   const report = useCallback(() => {
-      console.log(`**** report() -- analyser = ${analyser ? 1 : 0}`);
+      //console.log(`**** report() -- analyser = ${analyser ? 1 : 0}`);
     if (!analyser) return;
 
     const data = new Uint8Array(analyser?.frequencyBinCount);
@@ -304,8 +314,8 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 	//context.suspend();
 	}*/
       
-  //}, [analyser, context ? context.state : null]);
-  }, [analyser, context.state ]);    
+  //}, [analyser, context.state ]);    
+  }, [analyser, context ? context.state : null]);
 
   const processFrequencyData = (data: Uint8Array): void => {
     if (!canvasRef.current) return;

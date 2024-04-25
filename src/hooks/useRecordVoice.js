@@ -6,7 +6,6 @@ import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
     const [text, setText]             = useState("");
-    //const [statusText, setStatusText] = useState("");
     
     const [audioMimeType, setAudioMimeType] = useState("");
     const [audioFilename, setAudioFilename] = useState(null);
@@ -24,33 +23,29 @@ export const useRecordVoice = (props) => {
     const sourceNode   = useRef(null);
     const analyzerNode = useRef(null);
 
-    /*
-    useEffect(() => {
-	if (statusText !== "") {
-	    props.pageStatusCallback("Status: " + statusText);
-	}
-    }, [statusText])
-    */
     
-    const setStatusTextCB = (text) => {
+    const setStatusTextCallback = (text) => {
 	props.pageStatusCallback("Status: " + text);	
     };
 
     // OpenAI supported audio formats:
     //   ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']"
-
+    //
     const getOpenAISupportedMimeType = () => {
+	// Based on details in:
+	//    https://stackoverflow.com/questions/41739837/all-mime-types-supported-by-mediarecorder-in-firefox-and-chrome
+
+	// Supported MIME-types that web browsers are typically capable of recording in
 	const supported_formats = [
 	    "audio/ogg;codecs=opus",
 	    "audio/webm;codecs=opus",
-	    "audio/webm",
-	    "audio/ogg"
+	    "audio/ogg",
+	    "audio/webm"
 	];
 
 	let return_format = "";
 	
 	for (const format of supported_formats) {
-	    console.log("**** checking MIME type: " + format);
 	    if (MediaRecorder.isTypeSupported(format)) {
 		return_format = format;
 		break;
@@ -61,7 +56,6 @@ export const useRecordVoice = (props) => {
 	    console.error("Failed to find browser supported audio MIME-type that is compatible with OpenAI's transcribe service");
 	}
 
-	console.log("Away to return mimeType: " + return_format);
 	return return_format;
     }
     
@@ -74,7 +68,7 @@ export const useRecordVoice = (props) => {
 		stopRecording();
 	    }
 	    else {
-		setStatusTextCB("Recording ...");
+		setStatusTextCallback("Recording ...");
 		
 		isRecording.current = true;
 		mediaRecorder.start();
@@ -85,7 +79,7 @@ export const useRecordVoice = (props) => {
     
     const stopRecording = () => {
 	if (mediaRecorder) {
-	    setStatusTextCB("Stopped recording");
+	    setStatusTextCallback("Stopped recording");
 	    isRecording.current = false;
 	    mediaRecorder.stop();
             setRecording(false);
@@ -93,7 +87,7 @@ export const useRecordVoice = (props) => {
     };
 
     const getSynthesizedSpeech = async (text) => {
-	setStatusTextCB("ChatGPT response being synthesized as audio ...");
+	setStatusTextCallback("ChatGPT response being synthesized as audio ...");
 	
 	try {
 	    const response = await fetch("/api/textToSpeech", {
@@ -113,8 +107,6 @@ export const useRecordVoice = (props) => {
 		return json_str;
 	    });
 
-	    //console.log("getSynthesizedSpeech() API Response:")
-	    //console.log(response);
 	    
 	    if (response != null) {
 		const synthesizedAudioFilename = response.synthesizedAudioFilename;
@@ -132,7 +124,7 @@ export const useRecordVoice = (props) => {
 		
 		setAudioFilename(synthesizedAudioFilename);
 
-		setStatusTextCB("Playing the synthesized audio response ..."); // ****
+		setStatusTextCallback("Playing the synthesized audio response ..."); // ****
 		props.pageAudioFilenameCallback(synthesizedAudioFilename,synthesizedAudioBlob,synthesizedAudioMimeType);
 
 	    }
@@ -146,7 +138,7 @@ export const useRecordVoice = (props) => {
     
     const getPromptResponse = async (promptText) => {
 	//setText("Recognised text: " + promptText + " => Now being processing by ChatGPT");
-	setStatusTextCB("Recognised text being processed by ChatGPT");
+	setStatusTextCallback("Recognised text being processed by ChatGPT");
 
 	try {
 	    const response = await fetch("/api/chatGPT", {
@@ -166,26 +158,25 @@ export const useRecordVoice = (props) => {
 		return json_str;
 	    });
 
-	    //console.log(response);
 	    
 	    if (response != null) {
 		const result = response.result;
 		console.log(result);
 		const chatResponseText = result.content;	    
-		setStatusTextCB("ChatGPT response received");
+		setStatusTextCallback("ChatGPT response received");
 		
 		setText("ChatGPT says: " + chatResponseText);		
 		getSynthesizedSpeech(chatResponseText);		
 	    }
 	    else {		
 		setText("No response received from ChatGPT");
-		setStatusTextCB("No response received from ChatGPT");
+		setStatusTextCallback("No response received from ChatGPT");
 	    }
 	    
 	}
 	catch (error) {
 	    setText("A network error occured when trying to process the recognised text");
-	    setStatusTextCB("A network error occured");
+	    setStatusTextCallback("A network error occured");
 	    
 	    console.error(error);
 	}
@@ -194,7 +185,7 @@ export const useRecordVoice = (props) => {
     
     const getText = async (blob, base64data, mimeType) => {
 		    
-	setStatusTextCB("Text recognition of recorded audio ...");
+	setStatusTextCallback("Text recognition of recorded audio ...");
 	
 	try {
 	  const response = await fetch("/api/speechToText", {
@@ -220,7 +211,7 @@ export const useRecordVoice = (props) => {
 	      const audioFilename  = response.recordedAudioFilename;
 	      
 	      setText("Recognised spoken text: " + text);
-	      setStatusTextCB("Spoken text recognised");
+	      setStatusTextCallback("Spoken text recognised");
 	      
 	      setAudioFilename(audioFilename);
 	      // Do the following line if you want the audio to be played
@@ -231,7 +222,7 @@ export const useRecordVoice = (props) => {
 	  }
       }
       catch (error) {
-	  console.log(error);
+	  console.error(error);
       }
   };
 
@@ -239,18 +230,11 @@ export const useRecordVoice = (props) => {
     
   const initialMediaRecorder = (stream) => {
 
-      //console.log("newMediaRecorder:" + newMediaRecorder);
-      //console.log(mediaRecorder);
-
       if (newMediaRecorder === null) {
 	  const audioMimeType = getOpenAISupportedMimeType();
-	  console.log("Away to create MediaRecorder with mimeType = " + audioMimeType);
 	  
 	  newMediaRecorder = new MediaRecorder(stream, { mimeType: audioMimeType });
-	  
-	  console.log("**** MIME-type = " + newMediaRecorder.mimeType);
-	  
-	  
+	  	  
 	  //const sampleRate = stream.getAudioTracks()[0].getSettings().sampleRate;
 	  //console.log("Creating mediaRecorder() from stream with sampleRate = " + sampleRate);
 
