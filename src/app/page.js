@@ -4,14 +4,14 @@ import React, { useState, useEffect, useRef  } from 'react';
 
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 
-import { Microphone  } from "@/app/components/Microphone";
-import { AudioPlayer } from "@/app/components/AudioPlayer";
+import { MicrophoneModeEnum,  Microphone  } from "@/app/components/Microphone";
+import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
 
-//const DEBUG = true;
-const DEBUG = false;
+const DEBUG = true;
+//const DEBUG = false;
 
 const RouterOptions = DEBUG ?
       {
@@ -27,8 +27,14 @@ const RouterOptions = DEBUG ?
       };
 
 
+const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "playing":3, "paused":4 });
+
 export default function Home()
 {
+    const [interfaceMode,   setInterfaceMode]   = useState(InterfaceModeEnum.inactive);
+    const [microphoneMode,  setMicrophoneMode]  = useState(MicrophoneModeEnum.inactive);
+    const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
+    
     const [statusText, setStatusText]       = useState("Status: waiting for audio input"); // <string>
     const [audioFilename, setAudioFilename] = useState(null);
 
@@ -38,9 +44,13 @@ export default function Home()
     
     const mediaPlayer = useRef(null); // <MediaPlayer>
     
-    const mediaPlayerWidth  = 400;
-    const mediaPlayerHeight = 180;
+    const mediaPlayerWidth     = 400;
+    const mediaPlayerHeight    = 132;
+    const audioControllerWidth = 46;
 
+    const interfaceWidth = mediaPlayerWidth + audioControllerWidth;
+    
+    
     useEffect(() => {
 	if (mediaPlayer.current === null) {
 	    
@@ -53,22 +63,43 @@ export default function Home()
 	    });
 
 	}
-    }, [])
+    }, []);
 
     useEffect(() => {
 	if (blob !== null) {
 	    console.log(`[page.js] useEffect() [blob] non-null blob => setting mediaPlayer.state to "playing"`);
+            setInterfaceMode(InterfaceModeEnum.playing);
 	    mediaPlayer.current.state = "playing";
 
             // Take a copy of the blob so the audio player can start/stop playing it
             setAudioPlayerBlob(blob);
 	}
 	else {
-	    console.log(`[page.js] useEffect() [blob] blob is null  => setting mediaPlayer.state to "inactive"`);	    
-	    mediaPlayer.current.state = "inactive"
+	    console.log(`[page.js] useEffect() [blob] blob is null  => setting mediaPlayer.state to "inactive"`);
+            setInterfaceMode(InterfaceModeEnum.inactive);            
+	    mediaPlayer.current.state = "inactive";
 	}
     }, [blob]);
-  
+
+    useEffect(() => {
+        if (interfaceMode === InterfaceModeEnum.inactive) {
+            setMicrophoneMode(MicrophoneModeEnum.inactive);
+            setAudioPlayerMode(AudioPlayerModeEnum.inactive);
+        }
+        else if (interfaceMode === InterfaceModeEnum.recording) {
+            setMicrophoneMode(MicrophoneModeEnum.recording);
+            setAudioPlayerMode(AudioPlayerModeEnum.inactive);
+        }            
+        else if (interfaceMode === InterfaceModeEnum.playing) {
+            setMicrophoneMode(MicrophoneModeEnum.inactive);            
+            setAudioPlayerMode(AudioPlayerModeEnum.playing);
+        }
+        else if (interfaceMode === InterfaceModeEnum.paused) {
+            setMicrophoneMode(MicrophoneModeEnum.inactive);            
+            setAudioPlayerMode(AudioPlayerModeEnum.paused);
+        }        
+    }, [interfaceMode]);
+    
     const updateStatusCallback = (text) => {
 	setStatusText(text)
     };
@@ -133,20 +164,26 @@ export default function Home()
 	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
 
 	        <div className="flex flex-col justify-center items-center">
-	          <div className="textmessage pb-2" style={{width: mediaPlayerWidth+"px"}}>
+	          <div className="textmessage pb-2" style={{width: interfaceWidth+'px'}} >                  
 	            How can I help you today?
 	          </div>	    	    
 
-                  <div>
-	            <AudioPlayer
-                      mediaPlayer={mediaPlayer}
-	              handleRewind={handleAudioRewind}
-	              handlePauseToggle={handleAudioPauseToggle}
-	              handlePlay={handleAudioPlay}
-	              handleStop={handleAudioStop}
-                    />
-	            <div className="border border-black border-solid"
-	                 style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px', float: 'left'}}>
+                  <div style={{backgroundColor: '#f4f4f4', padding: '0.5rem 0.5rem 0 0.5rem'}}>
+                    <div style={{width: audioControllerWidth+'px', float: 'left'}} >
+                      <div style={{margin: '0.2rem'}}>
+	                <AudioPlayer
+                          mediaPlayer={mediaPlayer}
+	                  autoAudioPlayerMode={audioPlayerMode}
+	                  handleRewind={handleAudioRewind}
+	                  handlePauseToggle={handleAudioPauseToggle}
+	                  handlePlay={handleAudioPlay}
+	                  handleStop={handleAudioStop}                                  
+                        />
+                      </div>
+                    </div>
+	            <div className="border border-solid"
+	                 style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px',
+                                 backgroundColor: 'white', borderColorXX: 'black', float: 'right'}}>
 		      <AudioSpectrumVisualizer
 		        mediaPlayer={mediaPlayer}
 	                blob={blob}
@@ -161,10 +198,12 @@ export default function Home()
 	            </div>
                     
                   </div>
-	          <div className="textmessage text-sm p-2 mt-0 italic" style={{width: mediaPlayerWidth+'px', backgroundColor: "#F0F0F0"}} >
-	            {statusText}
+                  <div style={{backgroundColor: '#f4f4f4', padding: '0 0.5rem 0 0.5rem'}}>
+	            <div className="textmessage text-sm p-2 mt-0 italic"
+                         style={{width: interfaceWidth+'px', color: 'black', borderColorXX: '#176593'}} >
+	              {statusText}
+	            </div>
 	          </div>
-	    
 	          <Microphone
 	            routerOptions={RouterOptions}
 	            pageAudioFilenameCallback={audioFilenameCallback}

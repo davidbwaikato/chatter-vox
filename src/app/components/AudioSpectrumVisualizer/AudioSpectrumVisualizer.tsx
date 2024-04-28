@@ -255,7 +255,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
         analyser?.getByteFrequencyData(data);
         processFrequencyData(data);
-        console.log("  playing, requestAnimationFrame");
+        //console.log("  playing, requestAnimationFrame");
         requestAnimationFrame(report);
     }
       else if (mediaPlayer.current.state === "paused") {
@@ -302,14 +302,15 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
     
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      style={{
-          aspectRatio: "unset"
-      }}
-    />
+      <canvas
+        className="audio-spectrum-visualizer"
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{
+            aspectRatio: "unset"
+        }}
+      />
   );
 };
 

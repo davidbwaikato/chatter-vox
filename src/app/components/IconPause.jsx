@@ -2,14 +2,12 @@
 const IconPause = (props) => {
 
     return (
-	    <div className="pause-svg">
-	      <div className="pause-svg-container">
+	    <div className="pause-svg" style={{ pointerEvents: 'none'}}>
+	      <div className="pause-svg-container" style={{ pointerEvents: 'none'}}>
                 <svg xmlns="http://www.w3.org/2000/svg"
                      id="icon-pause"
                      viewBox="2 2 76 76">
                   <g>
-                    <path
-                      d="M39.75,5.5C20.834,5.5,5.5,20.834,5.5,39.75C5.5,58.666,20.834,74,39.75,74C58.666,74,74,58.666,74,39.75   C74,20.834,58.666,5.5,39.75,5.5z M39.75,70C23.043,70,9.5,56.457,9.5,39.75C9.5,23.043,23.043,9.5,39.75,9.5   C56.457,9.5,70,23.043,70,39.75C70,56.457,56.457,70,39.75,70z" />
                     <path
                       d="M37.125,52.375c0,2.348-1.903,4.25-4.25,4.25l0,0c-2.347,0-4.25-1.902-4.25-4.25V28.75c0-2.347,1.903-4.25,4.25-4.25l0,0   c2.347,0,4.25,1.903,4.25,4.25V52.375z" />
                     <path
