@@ -10,8 +10,8 @@ import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
 
-const DEBUG = true;
-//const DEBUG = false;
+//const DEBUG = true;
+const DEBUG = false;
 
 const RouterOptions = DEBUG ?
       {
@@ -36,11 +36,17 @@ export default function Home()
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
     
     const [statusText, setStatusText]       = useState("Status: waiting for audio input"); // <string>
-    const [audioFilename, setAudioFilename] = useState(null);
+    //const [audioFilename, setAudioFilename] = useState(null);
 
     const [blob, setBlob]                 = useState(null); // <Blob>
-    const [apBlob, setAudioPlayerBlob]             = useState(null); // <Blob> for AudioPlayer
+    const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
     const [audioContext, setAudioContext] = useState(null); // <AudioContext>
+
+    const [messages, setMessages] = useState([
+        { role: "system",    content: "You are a helpful assistant" },
+        { role: "assistant", content: "How can I you today?" }
+    ]);
+    const messagesRef = useRef(null);
     
     const mediaPlayer = useRef(null); // <MediaPlayer>
     
@@ -99,6 +105,13 @@ export default function Home()
             setAudioPlayerMode(AudioPlayerModeEnum.paused);
         }        
     }, [interfaceMode]);
+
+
+    useEffect(() => {
+        console.log("**** useEffect() [messages]");
+        console.log(messages);
+	messagesRef.current = messages;
+    }, [messages]);
     
     const updateStatusCallback = (text) => {
 	setStatusText(text)
@@ -142,7 +155,7 @@ export default function Home()
     };
 
    
-    const audioFilenameCallback = (callbackAudioFilename, callbackBlob, callbackMimeType) => {
+    const audioFilenameCallbackDeprecated = (callbackAudioFilename, callbackBlob, callbackMimeType) => {
 	console.log("[page.js] callbackAudioFilename = " + callbackAudioFilename)
 	
 	const callbackAudioURL = callbackAudioFilename.replace(/public/, "");
@@ -156,9 +169,62 @@ export default function Home()
             setAudioContext(new AudioContext());
         }
 	setBlob(callbackBlob);
+    };
+
+
+    const playAudioBlobCallback = (callbackBlob) => {
+	console.log("[page.js] playAudioBlobCallback()");
+	
+	//const callbackAudioURL = callbackAudioFilename.replace(/public/, "");
+	
+	//setAudioFilename(callbackAudioFilename);
+
+        if (audioContext === null) {
+            console.log("Initializing AudioContext");
+            setAudioContext(new AudioContext());
+        }
+	setBlob(callbackBlob);
 
     };
+
+    const updateMessagesCallback = (returnedMessagePair) => {
+        console.log("returnedMessagePair = " + JSON.stringify(returnedMessagePair));
+        const userMessage        = returnedMessagePair.userMessage;
+        const returnedTopMessage = returnedMessagePair.returnedTopMessage;
+
+        const updatedMessages = [...messages, userMessage, returnedTopMessage];
+        setMessages(updatedMessages);
+	
+/*    
+        const updatedMessages = [...messages, userMessage, returnedTopMessage];
+        //const updatedMessages_str = JSON.stringify(updatedMessages);
+        //const updatedMessages_cloned = JSON.parse(updatedMessages_str);
+    
+        //console.log("Updated Messages:" + JSON.stringify(updatedMessages));
         
+        //setMessages(updatedMessages_cloned);
+        setMessages(updatedMessages);
+*/
+	/*
+	let updatedMessages = JSON.parse(messages);
+	updatedMessages.push(userMessage, returnedTopMessage);
+	setMessages(JSON.stringify(updatedMessages));
+	*/
+	
+        //console.log("State Messages before:" + JSON.stringify(messages));
+/*        
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            userMessage,
+            returnedTopMessage
+        ]);
+*/
+        //console.log("State Messages after:" + JSON.stringify(messages));
+        //console.log("State kept Messages:");
+        //console.log(JSON.stringify(messages));
+        
+    };
+
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
 	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
@@ -206,8 +272,10 @@ export default function Home()
 	          </div>
 	          <Microphone
 	            routerOptions={RouterOptions}
-	            pageAudioFilenameCallback={audioFilenameCallback}
-		    pageStatusCallback={updateStatusCallback}
+                    messagesRef={messagesRef}
+		    updateStatusCallback={updateStatusCallback}
+	            playAudioBlobCallback={playAudioBlobCallback}
+                    updateMessagesCallback={updateMessagesCallback}
 	          />
                 </div>
 	      </div>

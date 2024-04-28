@@ -6,9 +6,11 @@ import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
     const [text, setText]  = useState("");
+
+    //const [messages, setMessages] = useState(props.messages);
     
     const [audioMimeType, setAudioMimeType] = useState("");
-    const [audioFilename, setAudioFilename] = useState(null);
+    //const [audioFilename, setAudioFilename] = useState(null);
 
     const [micLevel, setMicLevel] = useState("0%");
     const [micLevelCapped, setMicLevelCapped] = useState("0%");
@@ -23,9 +25,8 @@ export const useRecordVoice = (props) => {
     const sourceNode   = useRef(null);
     const analyzerNode = useRef(null);
 
-    
     const setStatusTextCallback = (text) => {
-	props.pageStatusCallback("Status: " + text);	
+	props.updateStatusCallback("Status: " + text);	
     };
 
     // OpenAI supported audio formats:
@@ -121,19 +122,20 @@ export const useRecordVoice = (props) => {
 		const synthesizedAudioFilename = response.synthesizedAudioFilename;
 		const synthesizedAudioMimeType = response.synthesizedAudioMimeType;
 	    
-		console.log("synthesizedAudioFilename: " + synthesizedAudioFilename);
+		//console.log("synthesizedAudioFilename: " + synthesizedAudioFilename);
 
 		const synthesizedAudioURL = synthesizedAudioFilename.replace(/public/,"")
 		
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
 		      .then(response => response.blob());
-		console.log("[useRecordVoice.js] synthesizedAudioBlob:");
-		console.log(synthesizedAudioBlob);
+		//console.log("[useRecordVoice.js] synthesizedAudioBlob:");
+		//console.log(synthesizedAudioBlob);
 		
-		setAudioFilename(synthesizedAudioFilename);
+		//setAudioFilename(synthesizedAudioFilename);
 
 		setStatusTextCallback("Playing the synthesized audio response ..."); // ****
-		props.pageAudioFilenameCallback(synthesizedAudioFilename,synthesizedAudioBlob,synthesizedAudioMimeType);
+		//props.pageAudioFilenameCallback(synthesizedAudioFilename,synthesizedAudioBlob,synthesizedAudioMimeType);
+		props.playAudioBlobCallback(synthesizedAudioBlob);
 
 	    }
 	}
@@ -145,7 +147,11 @@ export const useRecordVoice = (props) => {
     
     const getPromptResponse = async (promptText) => {
 	setStatusTextCallback("Recognised text being processed by ChatGPT");
-
+	console.log("**** getPromptResponse");
+	console.log("     " + props.messagesRef.current);
+	
+	//console.log(JSON.stringify(messages));
+	
 	try {
 	    const response = await fetch("/api/chatGPT", {
 		method: "POST",
@@ -153,8 +159,11 @@ export const useRecordVoice = (props) => {
 		    "Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-		    promptText: promptText,
-		    routerOptions: props.routerOptions		    
+		    routerOptions: props.routerOptions,
+		    //messages: JSON.parse(props.messages),
+		    messages: props.messagesRef.current,
+		    // //messages: messages,
+		    promptText: promptText
 		}),
 	    }).then((res) => {
 		let json_str = null;
@@ -166,10 +175,12 @@ export const useRecordVoice = (props) => {
 
 	    
 	    if (response != null) {
-		const result = response.result;
-		console.log(result);
-		const chatResponseText = result.content;	    
+		// The returned top message from ChatGTP
+		const result_message_pair = response.result;
+		console.log(result_message_pair);
+		const chatResponseText = result_message_pair.returnedTopMessage.content;	    
 		setStatusTextCallback("ChatGPT response received");
+		props.updateMessagesCallback(result_message_pair);
 		
 		setText("ChatGPT says: " + chatResponseText);		
 		getSynthesizedSpeech(chatResponseText);		
@@ -213,15 +224,16 @@ export const useRecordVoice = (props) => {
 
 	  if (response != null) {
 	      const { text } = response.recognizedTextData;
-	      const audioFilename  = response.recordedAudioFilename;
+	      //const audioFilename  = response.recordedAudioFilename;
 	      
 	      setText("Recognised spoken text: " + text);
 	      setStatusTextCallback("Spoken text recognised");
 	      
-	      setAudioFilename(audioFilename);
+	      //setAudioFilename(audioFilename);
 	      // Do the following line if you want the audio to be played
 	      //props.pageAudioFilenameCallback(audioFilename,blob,mimeType);
-
+	      //props.playAudioBlobCallback(blob);
+	      
 	      // Now ask ChatGPT to respond to the recognised text
 	      getPromptResponse(text);
 	  }
@@ -303,7 +315,15 @@ export const useRecordVoice = (props) => {
       }
       
   };
-
+/*
+    useEffect(() => {
+	console.log("[userRecordVoice.js] useEffect [props.message]");
+	setMessages(props.messages);
+	console.log(oJSON.stringify(props.messages));
+	//console.log(messages);
+  }, [props.messages]);
+*/
+    
   useEffect(() => {
       if (typeof window !== "undefined") {
 	  navigator.mediaDevices
@@ -312,5 +332,6 @@ export const useRecordVoice = (props) => {
       }
   }, []);
     
-    return { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, audioFilename };
+    //return { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, audioFilename };
+    return { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text };
 };

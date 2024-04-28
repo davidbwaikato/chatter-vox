@@ -142,10 +142,11 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
               if (mediaPlayer.current.state === "inactive" && audioContext.state === "running") {
                   // source.stop(0); // **** ????
                   audioContext.close();
+                  setAnalyser(null);
               }
           }
           
-          console.log("Zero-lining fequency display");
+          console.log("Displaying default frequency values of zeros");          
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
               max: 0,
               min: 0,

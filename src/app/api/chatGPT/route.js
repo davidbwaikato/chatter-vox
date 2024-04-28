@@ -21,8 +21,14 @@ async function POST_FAKE(body) {
     
     const response_data = {
 	result: {
-	    role: "assistant",
-	    content: "The river that flows through Hamilton, New Zealand is the Waikato River. [Hardwired Response]"
+	    userMessage: {
+		role:    "user",
+		content: "What is the name of the river thay flows through Hamilton, New Zealand"
+	    },
+	    returnedTopMessage: {
+		role:    "assistant",
+		content: "The river that flows through Hamilton, New Zealand is the Waikato River. [Hardwired Response]"
+	    }
 	}
     };
 
@@ -54,15 +60,27 @@ function OLD() {
 
 async function POST_REAL(body) {
 
+    const messages   = body.messages;
     const promptText = body.promptText;
 
+    console.log("[ChatGPT route.js] messages:");
+    console.log(messages);
+		
     console.log(`promptText = ${promptText}`);
-        
+
+    const newUserMessage = {
+	role: "user",
+	content: promptText
+    };
+    
+    const updatedMessages = [...messages, newUserMessage];
+    
     try {
 	const completion = await openai.chat.completions.create({
 	    //model: "gpt-4-turbo-preview",	    
 	    model: "gpt-4",
-	    messages: [
+	    messages: updatedMessages,
+/*	    messages: [
 		{
 		    role: "system",
 		    content: "You are a helpful assistant."
@@ -71,13 +89,13 @@ async function POST_REAL(body) {
 		    role: "user",
 		    content: promptText
 		}		
-	    ],
+	    ],*/
 	    temperature: 0,
 	});
 
-	const message = completion.choices[0].message;
+	const returnedTopMessage = completion.choices[0].message;
 	
-	const response_data = { result: message };
+	const response_data = { result: { userMessage: newUserMessage, returnedTopMessage: returnedTopMessage} };
 
 	return NextResponse.json(response_data);	
     }
