@@ -13,28 +13,36 @@ import { calculateBarData, draw } from "../LiveAudioVisualizer/utils";
 // is used to to keep state of what is happening in terms
 // of the playing audio
 
-class MediaPlayer {
-  public state: string;
-  
-  public constructor(onstopcallback) {
-      this.state = "inactive";
 
-      this.onstopplaying = onstopcallback;
-  }
-    /*
-  public setState(state: string) {
-      othis.state = state;
-  }
-*/
+class MediaPlayer {
+    public state: string;
+    
+    public constructor(onstopcallback) {
+        //console.log("**** !! MediaPlayer constructor called, setting state to 'inactive'");
+        this.state = "inactive";
+        
+        this.onstopplaying = onstopcallback;
+    }
+    
+    public setState(state: string) {
+        this.state = state;
+    }    
 }
+
 
 export interface Props {
   /**
-   * Media recorder who's stream needs to visualized
+   * The follow elements drive the audio that needs to be visualized
+   *   mediaPlayer:  Controls that state of the audio (inactive,playing,paused)
+   *   blob:         When non-null, the mimeType encoded audio to be played
+   *   audioContext: Used to create the FFT analyser 
+   *                 Web browsers require this to be generated in response to a user-click, 
+   *                 in the interface, which is why it is generated externally and passed in
    */
+
   mediaPlayer: MediaPlayer;
   blob: Blob;
-  context: AudioContext;
+  audioContext: AudioContext;
     
   /**
    * Width of the visualization. Default" "100%"
@@ -103,7 +111,7 @@ export interface Props {
 const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   mediaPlayer,
   blob,
-  context,  
+  audioContext,  
    
   width = "100%",
   height = "100%",
@@ -116,46 +124,94 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   minDecibels = -90,
   smoothingTimeConstant = 0.4,
 }: Props) => {
-   //const [context] = useState(() => new AudioContext());
-   // //const [context, setContext] = useState<AudioContext>(null);
-  //const [playing, setPlaying]   = useState<bool>(false);
   const [analyser, setAnalyser] = useState<AnalyserNode>();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const playingRef = useRef<bool>(false);
 
-    /*
-  useEffect(() => {
-      console.log(`useEffect() [], blob defined = ${blob ? defined : undefined}`);
-      
-      // onComponentMount/update
-      
-      if (!blob) {
-          const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
-            max: 0,
-            min: 0,
-          }));
-	  const data = new Uint8Array(dataZeros);	  
-	  processFrequencyData(data);
-	  / *
-	  draw(
-	      dataZeros,
-	      canvasRef.current,
-	      barWidth,
-	      gap,
-	      backgroundColor,
-	      barColor
-	  ); * /
-	  return;
-        }      
-  },[]);
-    */
     
   useEffect(() => {
-      console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);      
+      //console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);      
       //console.log(blob);
       
       if (!blob) {
+
+          if (mediaPlayer.current && audioContext) {
+              console.log(` audioContext.state = ${audioContext.state}`);
+              if (mediaPlayer.current.state === "inactive" && audioContext.state === "running") {
+                  // source.stop(0); // **** ????
+                  audioContext.close();
+              }
+          }
+          
+          console.log("Zero-lining fequency display");
+          const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
+              max: 0,
+              min: 0,
+          }));
+	  const data = new Uint8Array(dataZeros);	  
+	  processFrequencyData(data);
+          
+	  return;
+      }
+
+      
+      const connectAsSourceSync = async (audioBlob) => {
+	console.log("Converting blob to AudioData and setting up Analyser");
+
+        // On how to convert a blob to an audiobuffer, some responses to posted
+        // articles expressed concern that Safari needs a file to decode
+        // However -- if it was indeed an issue -- this looks to be a legacy
+        // issue, as testing in Safari (28 May 2024) works correctly
+        //
+        // For an alternative way for creating a an audiobuffer from a blob see:
+        //   https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
+          
+	const arrayBuffer = await audioBlob.arrayBuffer();
+	const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+	const analyserNode = audioContext.createAnalyser();
+	setAnalyser(analyserNode);
+	analyserNode.fftSize = fftSize;
+	analyserNode.minDecibels = minDecibels;
+	analyserNode.maxDecibels = maxDecibels;
+	analyserNode.smoothingTimeConstant = smoothingTimeConstant;
+
+	analyserNode.connect(audioContext.destination);
+	
+	const source = audioContext.createBufferSource();
+	source.buffer = audioBuffer;
+	source.connect(analyserNode);
+
+	source.onended = function() {
+	    console.log("Playing sound has ended");
+            source.stop(0);	    
+	    playingRef.current = false;
+
+	    audioContext.close();            
+	    setAnalyser(null);
+            
+	    mediaPlayer.current.onstopplaying();
+	};
+	
+	if (mediaPlayer.current.state === "playing") {              
+	    //if (navigator.userActivation.isActive) {
+		console.log("Starting source");
+	        source.start();
+	    //}
+	}
+      	
+    };
+
+      connectAsSourceSync(blob);
+      
+  }, [blob]);
+
+  useEffect(() => {
+      //console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);
+      if (!analyser) {
+          console.log("Displaying default frequency values of zeros");
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
               max: 0,
               min: 0,
@@ -163,133 +219,25 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 	  const data = new Uint8Array(dataZeros);	  
 	  processFrequencyData(data);
 
-	  return;
+          return
       }
-/*
-      if (!context) {
-	  //if (navigator.userActivation.isActive) {
-	      setContext(new AudioContext());
-	  //}
-	  //else {
-	  //    return;
-	  //}
+      
+      if (analyser && mediaPlayer.current.state === "playing") {
+          console.log("Calling report()");
+          report();
       }
-*/
-      
-      /*
-      console.log("mediaPlayer.state = " + mediaPlayer.state)
-      if (mediaPlayer.state === "initializing") {
-	  console.log("Initializing AudioSpectruVisualizer");
-	  report();
-	  mediaPlayer.state = "inactive";
-
-	  return;
-      }
-      else {      
-	  if (!context) {
-	      setContext(new AudioContext());
-	  }
-      }
-      */
-      
-    //console.log('blob:'); console.log(blob);
-      const connectAsSourceSync = async (audioBlob) => {
-	  console.log("Converting blob to AudioData and setting up Analyzer")
-
-	if (context.state === "suspended") {
-	    context.resume();
-	}
-	      
-	  
-	const arrayBuffer = await audioBlob.arrayBuffer();
-	//console.log('arrayBuffer:'); console.log(arrayBuffer)
-
-	const audioBuffer = await context.decodeAudioData(arrayBuffer);
-	//console.log('audioBuffer:'); console.log(audioBuffer)
-	//console.log('audioBuffer.getChannelData(0):'); console.log(audioBuffer.getChannelData(0))
-	
-
-	const analyserNode = context.createAnalyser();
-	setAnalyser(analyserNode);
-	analyserNode.fftSize = fftSize;
-	analyserNode.minDecibels = minDecibels;
-	analyserNode.maxDecibels = maxDecibels;
-	analyserNode.smoothingTimeConstant = smoothingTimeConstant;
-
-	analyserNode.connect(context.destination);
-	
-	const source = context.createBufferSource();
-	source.buffer = audioBuffer;
-	source.connect(analyserNode);
-
-	source.onended = function() {
-	    console.log("Playing sound has ended");
-            source.stop(0);	    
-	    mediaPlayer.state = "inactive"; // ****
-	    playingRef.current = false;
-
-	    if (context.state !== "suspended") {
-		context.suspend();
-	    }
-
-	    mediaPlayer.onstopplaying();
-	}
-	
-	if (mediaPlayer.state === "inactive") {
-	    //if (navigator.userActivation.isActive) {
-		console.log("Starting source");
-	        source.start();
-	        console.log("*** Setting mediaPlayer.state = 'playing'");
-		mediaPlayer.state = "playing";
-	    //}
-	}
-      	
-    }
-
-    if (!playingRef.current) {
-	playingRef.current = true;
-	connectAsSourceSync(blob);
-    }
-      
-
-      //  https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
-      /*
-      const fileReader = new FileReader();
-
-      // Set up file reader on loaded end event
-      fileReader.onloadend = () => {
-
-	  const arrayBuffer = fileReader.result as ArrayBuffer
-
-	  // Convert array buffer into audio buffer
-	  audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
-    
-	      // Do something with audioBuffer
-	      console.log(audioBuffer)
-    
-	  })
-      
-      }
-
-      //Load blob
-      fileReader.readAsArrayBuffer(blob)
-      */
-      
-      
-  //}, [mediaRecorder.stream]);
-  }, [blob]);
-
-  useEffect(() => {
-      console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.state}`);
-    if (analyser && mediaPlayer.state === "playing") {
-      report();
-    }
-  }, [analyser, mediaPlayer.state]);
+  }, [analyser, mediaPlayer.current ? mediaPlayer.current.state : null]);
 
   const report = useCallback(() => {
-      //console.log(`**** report() -- analyser = ${analyser ? 1 : 0}`);
-    if (!analyser) return;
+      //console.log(`**** report() -- analyser = ${analyser ? 1 : 0} audioContext.state = ${audioContext ? audioContext.state : null}`);
+      if (!analyser) {
+          return;
+      }
 
+      if (audioContext.state === "closed") {
+          return;
+      }
+      
     const data = new Uint8Array(analyser?.frequencyBinCount);
     
     //const dataOrig = new Uint8Array(analyser?.frequencyBinCount);
@@ -298,26 +246,42 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     // //const data = dataOrig.slice(2,8)
     // //const data = dataOrig.slice(2,16)
     //const data = dataOrig;
-    
-    if (mediaPlayer.state === "initializing") {
-      processFrequencyData(data);	  
-    } else if (mediaPlayer.state === "playing") {
-      analyser?.getByteFrequencyData(data);
-      processFrequencyData(data);
-      requestAnimationFrame(report);
-    } else if (mediaPlayer.state === "paused") {
-      processFrequencyData(data);
+
+      //console.log(`      -- checking mediaPlayer.state = ${mediaPlayer.current.state}`);
+    if (mediaPlayer.current.state === "playing") {
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
+        }
+
+        analyser?.getByteFrequencyData(data);
+        processFrequencyData(data);
+        console.log("  playing, requestAnimationFrame");
+        requestAnimationFrame(report);
     }
+      else if (mediaPlayer.current.state === "paused") {
+        if (audioContext.state === "running") {
+            audioContext.suspend();
+        }
+        requestAnimationFrame(report);                    
+    }
+      else if (mediaPlayer.current.state === "inactive" && audioContext.state === "running") {
+      //else if (mediaPlayer.current.state === "inactive") {
+	  //audioContext.suspend();
+          console.log("closing audioContext");
+          audioContext.close();
+          // source.stop() // ****
+	  setAnalyser(null);          
+      }
       /*
-      else if (mediaPlayer.state === "inactive" && context.state !== "closed") {
-	//context.close();
-	//context.suspend();
+      else if (mediaPlayer.state === "inactive" && audioContext.state !== "closed") {
+	//audioContext.close();
+	//audioContext.suspend();
 	}*/
       
-  //}, [analyser, context.state ]);    
-  }, [analyser, context ? context.state : null]);
+  }, [analyser, audioContext ? audioContext.state : null]);
 
   const processFrequencyData = (data: Uint8Array): void => {
+      //console.log("*** processFrequencyData()");
     if (!canvasRef.current) return;
 
     const dataPoints = calculateBarData(
@@ -336,6 +300,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     );
   };
 
+    
   return (
     <canvas
       ref={canvasRef}
@@ -348,5 +313,4 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   );
 };
 
-//export { AudioSpectrumVisualizer };
 export { MediaPlayer, AudioSpectrumVisualizer };

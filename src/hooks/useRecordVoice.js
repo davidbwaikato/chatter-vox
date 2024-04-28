@@ -5,7 +5,7 @@ import { blobToBase64 } from "@/utils/blobToBase64";
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
-    const [text, setText]             = useState("");
+    const [text, setText]  = useState("");
     
     const [audioMimeType, setAudioMimeType] = useState("");
     const [audioFilename, setAudioFilename] = useState(null);
@@ -37,26 +37,15 @@ export const useRecordVoice = (props) => {
 
 	// Supported MIME-types that web browsers are typically capable of recording in
 	const supported_formats = [
-	    "audio/ogg;codecs=opus",
-	    "audio/webm;codecs=opus",
+	    "audio/ogg;codecs=opus",  // Firefox friendly
+	    "audio/webm;codecs=opus", // Chrome  friendly
+	    "audio/mp4;codecs=mp4a",  // Safari  friendly
+	    // and then some less specific versions
 	    "audio/ogg",
 	    "audio/webm",
-	    "audio/mp4;codecs=mp4a"
+	    "audio/mp4"
 	];
 
-	/*
-
--- Top supported Video :  video/mp4;codecs=avc1
--- Top supported Audio :  undefined
--- All supported Videos :  [
-  "video/mp4;codecs=avc1",
-  "video/mp4;codecs=AVC1",
-  "video/mp4;codecs=mp4a",
-  "video/mp4;codecs=MP4A",
-  "video/mp4"
-]
--- All supported Audios :  []
-	 */
 	let return_format = "";
 	
 	for (const format of supported_formats) {
@@ -125,8 +114,11 @@ export const useRecordVoice = (props) => {
 
 	    
 	    if (response != null) {
+		// The following could be more streamlined if the server returned the blob
+		// for the audio directly.  As the returned response is in JSON, this in
+		// turn would need the blob to be encoded in something like base64
+		
 		const synthesizedAudioFilename = response.synthesizedAudioFilename;
-		//const synthesizedAudioBlob     = response.synthesizedAudioBlob;
 		const synthesizedAudioMimeType = response.synthesizedAudioMimeType;
 	    
 		console.log("synthesizedAudioFilename: " + synthesizedAudioFilename);
@@ -150,10 +142,8 @@ export const useRecordVoice = (props) => {
 	}
     };
 
-
     
     const getPromptResponse = async (promptText) => {
-	//setText("Recognised text: " + promptText + " => Now being processing by ChatGPT");
 	setStatusTextCallback("Recognised text being processed by ChatGPT");
 
 	try {
@@ -199,8 +189,7 @@ export const useRecordVoice = (props) => {
     };
     
     
-    const getText = async (blob, base64data, mimeType) => {
-		    
+    const getText = async (blob, base64data, mimeType) => {		    
 	setStatusTextCallback("Text recognition of recorded audio ...");
 	
 	try {
@@ -242,19 +231,18 @@ export const useRecordVoice = (props) => {
       }
   };
 
-  let newMediaRecorder = null;
     
-  const initialMediaRecorder = (stream) => {
+  const initializeMediaRecorder = (stream) => {
 
-      if (newMediaRecorder === null) {
+      if (mediaRecorder === null) {
 	  const audioMimeType = getOpenAISupportedMimeType();
 	  
-	  newMediaRecorder = new MediaRecorder(stream, { mimeType: audioMimeType });
+	  const thisMediaRecorder = new MediaRecorder(stream, { mimeType: audioMimeType });
 	  	  
 	  //const sampleRate = stream.getAudioTracks()[0].getSettings().sampleRate;
 	  //console.log("Creating mediaRecorder() from stream with sampleRate = " + sampleRate);
 
-	  newMediaRecorder.onstart = () => {
+	  thisMediaRecorder.onstart = () => {
 	      console.log("mediaRecorder.onstart()");
 	      audioContext.current = new AudioContext();
 	      sourceNode.current = audioContext.current.createMediaStreamSource(stream);
@@ -294,13 +282,13 @@ export const useRecordVoice = (props) => {
 	      chunks.current = [];
 	  };
       
-	  newMediaRecorder.ondataavailable = (ev) => {
+	  thisMediaRecorder.ondataavailable = (ev) => {
 	      chunks.current.push(ev.data);
 	  };
 	  
-	  newMediaRecorder.onstop = () => {
+	  thisMediaRecorder.onstop = () => {
 	      console.log("mediaRecorder.onstop()");
-	      const audioMimeType = newMediaRecorder.mimeType;
+	      const audioMimeType = thisMediaRecorder.mimeType;
 	      console.log("audioMimeType = " + audioMimeType);
 	      setAudioMimeType(audioMimeType);      
 	      
@@ -310,7 +298,7 @@ export const useRecordVoice = (props) => {
 	      blobToBase64(audioBlob, getText);
 	  };
 
-	  setMediaRecorder(newMediaRecorder);      
+	  setMediaRecorder(thisMediaRecorder);      
 	  
       }
       
@@ -320,7 +308,7 @@ export const useRecordVoice = (props) => {
       if (typeof window !== "undefined") {
 	  navigator.mediaDevices
               .getUserMedia({ audio: true })
-              .then(initialMediaRecorder);
+              .then(initializeMediaRecorder);
       }
   }, []);
     
