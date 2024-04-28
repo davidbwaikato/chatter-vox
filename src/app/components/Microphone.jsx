@@ -8,11 +8,8 @@ import { IconMicrophone } from "@/app/components/IconMicrophone";
 const MicrophoneModeEnum = Object.freeze({"inactive":1, "recording":2});
 
 const Microphone = (props) => {    
-    //const { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, statusText, audioFilename } = useRecordVoice(props);
     const { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, statusText } = useRecordVoice(props);
 
-    //const [messages, setMessages] = useState(props.messages);
-    
     const [microphoneMode, setMicrophoneMode] = useState(MicrophoneModeEnum.inactive);
     
     const [isMouseDown, setIsMouseDown] = useState(false);
@@ -79,17 +76,6 @@ const Microphone = (props) => {
         display: 'none'
     };
 
-    /*
-    useEffect(() => {
-        console.log("[Microphone.jsx] useEffect [props.messages]");
-	console.log(props.messages);
-        setMessages(props.messages);
-	//console.log(JSON.stringify(props.messages));
-        //console.log(messages);
-    }, [props.messages]);
-    */
-   
-    
     return (
       <div className="flex flex-col justify-center items-center p-3">
         <button className="border-none bg-transparent w-14 rounded-full" style={containerStyle}

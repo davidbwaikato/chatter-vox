@@ -6,11 +6,8 @@ import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
     const [text, setText]  = useState("");
-
-    //const [messages, setMessages] = useState(props.messages);
     
     const [audioMimeType, setAudioMimeType] = useState("");
-    //const [audioFilename, setAudioFilename] = useState(null);
 
     const [micLevel, setMicLevel] = useState("0%");
     const [micLevelCapped, setMicLevelCapped] = useState("0%");
@@ -29,14 +26,14 @@ export const useRecordVoice = (props) => {
 	props.updateStatusCallback("Status: " + text);	
     };
 
-    // OpenAI supported audio formats:
+    // OpenAI supported audio formats (as of 28 April 2024):
     //   ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']"
     //
     const getOpenAISupportedMimeType = () => {
-	// Based on details in:
+	// For web browser supported Mime type, based on details in:
 	//    https://stackoverflow.com/questions/41739837/all-mime-types-supported-by-mediarecorder-in-firefox-and-chrome
 
-	// Supported MIME-types that web browsers are typically capable of recording in
+	// Intersection of OpenAI transcript and web browser Mime types
 	const supported_formats = [
 	    "audio/ogg;codecs=opus",  // Firefox friendly
 	    "audio/webm;codecs=opus", // Chrome  friendly
@@ -128,13 +125,8 @@ export const useRecordVoice = (props) => {
 		
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
 		      .then(response => response.blob());
-		//console.log("[useRecordVoice.js] synthesizedAudioBlob:");
-		//console.log(synthesizedAudioBlob);
-		
-		//setAudioFilename(synthesizedAudioFilename);
 
-		setStatusTextCallback("Playing the synthesized audio response ..."); // ****
-		//props.pageAudioFilenameCallback(synthesizedAudioFilename,synthesizedAudioBlob,synthesizedAudioMimeType);
+		setStatusTextCallback("Playing the synthesized audio response ...");
 		props.playAudioBlobCallback(synthesizedAudioBlob);
 
 	    }
@@ -147,10 +139,8 @@ export const useRecordVoice = (props) => {
     
     const getPromptResponse = async (promptText) => {
 	setStatusTextCallback("Recognised text being processed by ChatGPT");
-	console.log("**** getPromptResponse");
-	console.log("     " + props.messagesRef.current);
-	
-	//console.log(JSON.stringify(messages));
+	//console.log("**** getPromptResponse");
+	//console.log("     " + props.messagesRef.current);
 	
 	try {
 	    const response = await fetch("/api/chatGPT", {
@@ -315,14 +305,7 @@ export const useRecordVoice = (props) => {
       }
       
   };
-/*
-    useEffect(() => {
-	console.log("[userRecordVoice.js] useEffect [props.message]");
-	setMessages(props.messages);
-	console.log(oJSON.stringify(props.messages));
-	//console.log(messages);
-  }, [props.messages]);
-*/
+    
     
   useEffect(() => {
       if (typeof window !== "undefined") {
@@ -332,6 +315,5 @@ export const useRecordVoice = (props) => {
       }
   }, []);
     
-    //return { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, audioFilename };
     return { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text };
 };

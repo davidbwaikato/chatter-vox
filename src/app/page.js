@@ -193,36 +193,7 @@ export default function Home()
         const returnedTopMessage = returnedMessagePair.returnedTopMessage;
 
         const updatedMessages = [...messages, userMessage, returnedTopMessage];
-        setMessages(updatedMessages);
-	
-/*    
-        const updatedMessages = [...messages, userMessage, returnedTopMessage];
-        //const updatedMessages_str = JSON.stringify(updatedMessages);
-        //const updatedMessages_cloned = JSON.parse(updatedMessages_str);
-    
-        //console.log("Updated Messages:" + JSON.stringify(updatedMessages));
-        
-        //setMessages(updatedMessages_cloned);
-        setMessages(updatedMessages);
-*/
-	/*
-	let updatedMessages = JSON.parse(messages);
-	updatedMessages.push(userMessage, returnedTopMessage);
-	setMessages(JSON.stringify(updatedMessages));
-	*/
-	
-        //console.log("State Messages before:" + JSON.stringify(messages));
-/*        
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            userMessage,
-            returnedTopMessage
-        ]);
-*/
-        //console.log("State Messages after:" + JSON.stringify(messages));
-        //console.log("State kept Messages:");
-        //console.log(JSON.stringify(messages));
-        
+        setMessages(updatedMessages);	        
     };
 
     return (

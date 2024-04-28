@@ -54,20 +54,6 @@ const AudioPlayer = (props) => {
         else {
             return '';
         }
-        /*
-	if (isMouseDown) {
-	    return 'rgb(230,10,10)'; // red for record!
-	}
-	else {
-	    if (isHover) {
-		return 'hsl(195, 53%, 84%)' // make it even lighter-blue
-		//return 'hsl(200, 80%, 51%)' // make it even lighter atea-blue
-	    }
-	    else {
-		return 'hsl(195, 53%, 79%)' // lightblue
-		//return 'hsl(200, 80%, 46%)' // atea-blue
-	    }
-	}*/
     };
 
 
@@ -88,7 +74,6 @@ const AudioPlayer = (props) => {
     };
     
     const handlePauseToggle = () => {
-        //console.log("handlePauseToggle()");
         if (props.mediaPlayer.current.state === "playing") {
             setAudioPlayerMode(AudioPlayerModeEnum.paused);
             setIsHover(null);
@@ -100,7 +85,6 @@ const AudioPlayer = (props) => {
     };
 
     const handleStop = () => {
-        //console.log("handleStop()");
         setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         props.handleStop();
     };
