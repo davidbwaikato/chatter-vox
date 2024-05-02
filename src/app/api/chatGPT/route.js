@@ -7,6 +7,7 @@ import * as dotenv from "dotenv";
 import { env } from "../../config/env";
 
 import { OpenAI } from "openai";
+import Anthropic from '@anthropic-ai/sdk';
 
 import { sleep } from "../utils";
 
@@ -15,6 +16,21 @@ dotenv.config();
 const openai = new OpenAI({
     apiKey: env.OPENAI_API_KEY,
 });
+
+const anthropic = new Anthropic({
+  apiKey: process.env['ANTHROPIC_API_KEY'], // This is the default and can be omitted
+});
+
+/*
+
+const msg = await anthropic.messages.create({
+  model: "claude-3-opus-20240229",
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "Hello, Claude how are you today?" }],
+});
+console.log(msg);
+*/
+
 
 
 async function POST_FAKE(body) {
@@ -58,15 +74,15 @@ function OLD() {
 }
 */
 
-async function POST_REAL(body) {
+async function POST_REAL_OPENAI(body) {
 
     const messages   = body.messages;
     const promptText = body.promptText;
 
-    console.log("[ChatGPT route.js] messages:");
-    console.log(messages);
+    //console.log("[ChatLLM route.js] messages:");
+    //console.log(messages);
 		
-    console.log(`promptText = ${promptText}`);
+    //console.log(`promptText = ${promptText}`);
 
     const newUserMessage = {
 	role: "user",
@@ -80,31 +96,75 @@ async function POST_REAL(body) {
 	    //model: "gpt-4-turbo-preview",	    
 	    model: "gpt-4",
 	    messages: updatedMessages,
-/*	    messages: [
-		{
-		    role: "system",
-		    content: "You are a helpful assistant."
-		},
-		{
-		    role: "user",
-		    content: promptText
-		}		
-	    ],*/
 	    temperature: 0,
 	});
 
 	const returnedTopMessage = completion.choices[0].message;
 	
 	const response_data = { result: { userMessage: newUserMessage, returnedTopMessage: returnedTopMessage} };
-
+	//console.log("Response data:");
+	//console.log(response_data)
 	return NextResponse.json(response_data);	
     }
     catch (error) {
-	console.error("Error getting chatGPT response to promptText:", error);
+	console.error("Error getting ChatLLM response to promptText:", error);
 	return NextResponse.error();
     }    
 }
 
+
+async function POST_REAL_ANTHROPIC(body)
+{
+
+    const messages   = body.messages;
+    const promptText = body.promptText;
+
+    /*
+    console.log("[ChatLLM route.js] messages:");
+    console.log(messages);
+		
+    console.log(`promptText = ${promptText}`);
+    */
+    
+    const newUserMessage = {
+	role: "user",
+	content: promptText
+    };
+    
+    const updatedMessages = [...messages, newUserMessage];
+    updatedMessages.shift();
+    updatedMessages.shift();
+
+    //console.log("[Anthropic/Claude route.js] updatedMessages:");
+    //console.log(updatedMessages);
+
+    
+    try {
+	const message = await anthropic.messages.create({
+	    model: 'claude-3-opus-20240229',
+	    max_tokens: 1024,
+	    messages: updatedMessages,
+	});
+
+	//console.log(message.content);
+	
+	const returnedTopMessage = { role: "assistant", content: message.content[0].text }
+	
+	const response_data = { result: { userMessage: newUserMessage, returnedTopMessage: returnedTopMessage} };
+	//console.log("Response data:");
+	//console.log(response_data);
+	
+	return NextResponse.json(response_data);	
+    }
+    catch (error) {
+	console.error("Error getting Anthropic Claude response to promptText:", error);
+	return NextResponse.error();
+    }    
+
+    
+}
+
+    
 export async function POST(req)
 {
     
@@ -112,11 +172,12 @@ export async function POST(req)
     const routerOptions = body.routerOptions;
 
     let returned_response = null;
-    if (routerOptions.fakeChatGPT) {
+    if (routerOptions.fakeChatLLM) {
 	returned_response = await POST_FAKE(body);
     }
     else {
-	returned_response = await POST_REAL(body);
+	//returned_response = await POST_REAL_OPENAI(body);
+	returned_response = await POST_REAL_ANTHROPIC(body);
     }
     
     return returned_response;

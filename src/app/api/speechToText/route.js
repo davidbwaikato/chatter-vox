@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+
 import fs from "fs";
 import path from "path";
+
 import * as dotenv from "dotenv";
-import OpenAI from "openai";
 import { env } from "../../config/env";
+
+import OpenAI from "openai";
 
 dotenv.config();
 
@@ -88,6 +91,9 @@ export async function POST(req)
 //
 // For more details, see:
 //   https://stackoverflow.com/questions/63968953/why-do-i-get-a-502-gateway-error-from-nextjs-app-hosted-on-firebase-for-post-r
+
+// Also:
+//   https://nextjs.org/docs/pages/building-your-application/routing/api-routes#custom-config
 
 export const config = {
   api: {

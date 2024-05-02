@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import fs   from "fs";
 import path from "path";
+import process from "process";
+//const tmp = require('tmp');
+import tmp from "tmp";
 
 import * as dotenv from "dotenv";
 import { env } from "../../config/env";
@@ -19,7 +22,7 @@ const openai = new OpenAI({
 async function POST_FAKE(body) {
 
     const response_data = {
-	synthesizedAudioFilename: 'public/tmp/fake-synthesized-audio.mp3',
+	synthesizedAudioFilename: path.join("public","tmp","fake-synthesized-audio.mp3"),
 	synthesizedAudioBlob: null
     };
 
@@ -37,7 +40,20 @@ async function POST_REAL(body) {
     const audioMimeType = "audio/mpeg";
     
     const tmpDir        = path.join("public","tmp");
-    const audioFilePath = path.join(tmpDir,"synthesized-audio"+audioFileExt);
+    const pid           = process.pid;
+
+    const tmpOptions = {
+	tmpdir: tmpDir,
+	prefix: `synthesized-audio-${pid}--`,
+	postfix: audioFileExt,
+	keep: true
+    };
+        
+    const audioFilePathOLD = path.join(tmpDir,"synthesized-audio"+audioFileExt);
+    const audioFilePath = tmp.tmpNameSync(tmpOptions).replace(process.cwd()+"/","");
+    
+    console.log(`audioFilePathOLD = ${audioFilePathOLD}`);
+    console.log(`audioFilePath    = ${audioFilePath}`);
     
     try {
 	if (!fs.existsSync(tmpDir)) {
@@ -112,6 +128,9 @@ export async function POST(req)
 //
 // For more details, see:
 //   https://stackoverflow.com/questions/63968953/why-do-i-get-a-502-gateway-error-from-nextjs-app-hosted-on-firebase-for-post-r
+
+// Also:
+//   https://nextjs.org/docs/pages/building-your-application/routing/api-routes#custom-config
 
 export const config = {
   api: {
