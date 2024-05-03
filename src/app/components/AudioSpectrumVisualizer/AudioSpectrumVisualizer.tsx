@@ -106,6 +106,8 @@ export interface Props {
    * Default: `0.4`
    */
   smoothingTimeConstant?: number;
+
+  updateStatusCallback?: any;
 }
 
 const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
@@ -123,13 +125,31 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   maxDecibels = -10,
   minDecibels = -90,
   smoothingTimeConstant = 0.4,
+  updateStatusCallback = null,  
 }: Props) => {
   const [analyser, setAnalyser] = useState<AnalyserNode>();
 
+  const [duration , setDuration ] = useState<number>(0.0);
+  const [startTime, setStartTime] = useState<number>(0.0);
+  const [pauseTime, setPauseTime] = useState<number>(0.0);
+  const [progress , setProgress ] = useState<number>(0.0);
+    
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const playingRef = useRef<bool>(false);
+  //const playingRef = useRef<bool>(false);
 
+  const updateProgress = () => {
+      const new_progress = startTime - audioContext.currentTime;
+      setProgress(new_progress);
+      //updateStatusCallback("[" + progress + " / " + duration + "]");
+  };
+
+  const resetProgress = () => {
+      setDuration(0.0);
+      setStartTime(0.0);
+      setPauseTime(0.0)
+      setProgress(0.0)
+  };
     
   useEffect(() => {
       //console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);      
@@ -143,6 +163,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
                   // source.stop(0); // **** ????
                   audioContext.close();
                   setAnalyser(null);
+                  resetProgress();
               }
           }
           
@@ -172,6 +193,10 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 	const arrayBuffer = await audioBlob.arrayBuffer();
 	const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
+        // For details on duration, and current progress while playing:
+        //   https://stackoverflow.com/questions/31644060/how-can-i-get-an-audiobuffersourcenodes-current-time
+        setDuration(audioBuffer.duration); // in seconds
+          
 	const analyserNode = audioContext.createAnalyser();
 	setAnalyser(analyserNode);
 	analyserNode.fftSize = fftSize;
@@ -188,19 +213,20 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 	source.onended = function() {
 	    console.log("Playing sound has ended");
             source.stop(0);	    
-	    playingRef.current = false;
+	    //playingRef.current = false;
 
 	    audioContext.close();            
 	    setAnalyser(null);
+            resetProgress();
             
 	    mediaPlayer.current.onstopplaying();
 	};
 	
 	if (mediaPlayer.current.state === "playing") {              
-	    //if (navigator.userActivation.isActive) {
-		console.log("Starting source");
-	        source.start();
-	    //}
+	    console.log("Starting source");
+	    source.start();
+            setStartTime(audioContext.currentTime);
+            updateProgress();
 	}
       	
     };
@@ -251,6 +277,12 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       //console.log(`      -- checking mediaPlayer.state = ${mediaPlayer.current.state}`);
     if (mediaPlayer.current.state === "playing") {
         if (audioContext.state === "suspended") {
+            // AudioContext coming out of pause-state
+            // => Need to recalculate the startTime, to take account of pause,            
+            //    so the progress calculation remains correct
+            const pause_duration = audioContext.currenTime - pauseTime;
+            const pause_compensated_start_time = startTime + pause_duration;
+            setStartTime(pause_compensated_start_time);
             audioContext.resume();
         }
 
@@ -259,8 +291,10 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
         //console.log("  playing, requestAnimationFrame");
         requestAnimationFrame(report);
     }
-      else if (mediaPlayer.current.state === "paused") {
+    else if (mediaPlayer.current.state === "paused") {
         if (audioContext.state === "running") {
+            // AudioContext entering pause-state
+            setPauseTime(audioContext.currentTime);              
             audioContext.suspend();
         }
         requestAnimationFrame(report);                    
@@ -271,7 +305,8 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
           console.log("closing audioContext");
           audioContext.close();
           // source.stop() // ****
-	  setAnalyser(null);          
+	  setAnalyser(null);
+          resetProgress();
       }
       /*
       else if (mediaPlayer.state === "inactive" && audioContext.state !== "closed") {
