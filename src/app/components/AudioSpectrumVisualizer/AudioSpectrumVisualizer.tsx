@@ -215,7 +215,9 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
             source.stop(0);	    
 	    //playingRef.current = false;
 
-	    audioContext.close();            
+	    //if (audioContext.state !== "closed") {	    
+	    //    audioContext.close();
+            //}
 	    setAnalyser(null);
             resetProgress();
             
@@ -303,6 +305,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       //else if (mediaPlayer.current.state === "inactive") {
 	  //audioContext.suspend();
           console.log("closing audioContext");
+          console.log(audioContext.state);
           audioContext.close();
           // source.stop() // ****
 	  setAnalyser(null);
