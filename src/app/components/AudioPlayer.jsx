@@ -18,8 +18,7 @@ const AudioPlayer = (props) => {
     useEffect(() => {
         setAudioPlayerMode(props.autoAudioPlayerMode);
     }, [props.autoAudioPlayerMode]);
-
-
+    
     const handleMouseEnter = (event) => {
         const enterElem = event.target;
 
