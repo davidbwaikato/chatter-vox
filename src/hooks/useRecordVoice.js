@@ -22,10 +22,6 @@ export const useRecordVoice = (props) => {
     const sourceNode   = useRef(null);
     const analyzerNode = useRef(null);
 
-    const setStatusTextCallback = (text) => {
-	props.updateStatusCallback("Status: " + text);	
-    };
-
     // OpenAI supported audio formats (as of 28 April 2024):
     //   ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']"
     //
@@ -69,7 +65,7 @@ export const useRecordVoice = (props) => {
 		stopRecording();
 	    }
 	    else {
-		setStatusTextCallback("Recording ...");
+		props.updateStatusCallback("Recording ...");
 		
 		isRecording.current = true;
 		// Controlling the timeslice to .start() to be 1000, based on OpenAI Whisper <=> Safari issue
@@ -82,7 +78,7 @@ export const useRecordVoice = (props) => {
     
     const stopRecording = () => {
 	if (mediaRecorder) {
-	    setStatusTextCallback("Stopped recording");
+	    props.updateStatusCallback("Stopped recording");
 	    isRecording.current = false;
 	    mediaRecorder.stop();
             setRecording(false);
@@ -90,7 +86,7 @@ export const useRecordVoice = (props) => {
     };
 
     const getSynthesizedSpeech = async (text) => {
-	setStatusTextCallback("ChatGPT response being synthesized as audio ...");
+	props.updateStatusCallback(props.routerOptions.chatLLM + "'s response being synthesized as audio ...");
 	
 	try {
 	    const response = await fetch("/api/textToSpeech", {
@@ -126,7 +122,7 @@ export const useRecordVoice = (props) => {
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
 		      .then(response => response.blob());
 
-		setStatusTextCallback("Playing the synthesized audio response ...");
+		props.updateStatusCallback("Playing the synthesized audio response ...");
 		props.playAudioBlobCallback(synthesizedAudioBlob);
 
 	    }
@@ -138,12 +134,12 @@ export const useRecordVoice = (props) => {
 
     
     const getPromptResponse = async (promptText) => {
-	setStatusTextCallback("Recognised text being processed by ChatGPT");
+	props.updateStatusCallback("Recognised text being processed by " + props.routerOptions.chatLLM);
 	//console.log("**** getPromptResponse");
 	//console.log("     " + props.messagesRef.current);
 	
 	try {
-	    const response = await fetch("/api/chatGPT", {
+	    const response = await fetch("/api/chatLLM", {
 		method: "POST",
 		headers: {
 		    "Content-Type": "application/json",
@@ -165,25 +161,25 @@ export const useRecordVoice = (props) => {
 
 	    
 	    if (response != null) {
-		// The returned top message from ChatGTP
+		// The returned top message from ChatLMM
 		const result_message_pair = response.result;
 		console.log(result_message_pair);
 		const chatResponseText = result_message_pair.returnedTopMessage.content;	    
-		setStatusTextCallback("ChatGPT response received");
+		props.updateStatusCallback(props.routerOptions.chatLLM + "'s response received");
 		props.updateMessagesCallback(result_message_pair);
 		
-		setText("ChatGPT says: " + chatResponseText);		
+		setText(props.routerOptions.chatLLM + " says: " + chatResponseText); // ****
 		getSynthesizedSpeech(chatResponseText);		
 	    }
 	    else {		
-		setText("No response received from ChatGPT");
-		setStatusTextCallback("No response received from ChatGPT");
+		setText("No response received from " + props.routerOptions.chatLLM);
+		props.updateStatusCallback("No response received from " + props.routerOptions.chatLLM);
 	    }
 	    
 	}
 	catch (error) {
 	    setText("A network error occured when trying to process the recognised text");
-	    setStatusTextCallback("A network error occured");
+	    props.updateStatusCallback("A network error occured");
 	    
 	    console.error(error);
 	}
@@ -191,7 +187,7 @@ export const useRecordVoice = (props) => {
     
     
     const getText = async (blob, base64data, mimeType) => {		    
-	setStatusTextCallback("Text recognition of recorded audio ...");
+	props.updateStatusCallback("Text recognition of recorded audio ...");
 	
 	try {
 	  const response = await fetch("/api/speechToText", {
@@ -217,14 +213,14 @@ export const useRecordVoice = (props) => {
 	      //const audioFilename  = response.recordedAudioFilename;
 	      
 	      setText("Recognised spoken text: " + text);
-	      setStatusTextCallback("Spoken text recognised");
+	      props.updateStatusCallback("Spoken text recognised");
 	      
 	      //setAudioFilename(audioFilename);
 	      // Do the following line if you want the audio to be played
 	      //props.pageAudioFilenameCallback(audioFilename,blob,mimeType);
 	      //props.playAudioBlobCallback(blob);
 	      
-	      // Now ask ChatGPT to respond to the recognised text
+	      // Now ask ChatLLM to respond to the recognised text
 	      getPromptResponse(text);
 	  }
       }

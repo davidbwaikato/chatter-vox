@@ -107,7 +107,7 @@ async function POST_REAL_OPENAI(body) {
 	return NextResponse.json(response_data);	
     }
     catch (error) {
-	console.error("Error getting ChatLLM response to promptText:", error);
+	console.error("Error getting response from " + props.routerOptions.chatLLM + " to promptText:", error);
 	return NextResponse.error();
     }    
 }
