@@ -15,14 +15,16 @@ const DEBUG = false;
 
 const RouterOptions = DEBUG ?
       {
+          chatLLM: "FakeLLM",
 	  fakeSpeechToText: true,
-	  fakeChatGPT:      true,
+	  fakeChatLLM:      true,
 	  fakeTextToSpeech: true
       }
       :
       {
+          chatLLM: "Claude",
 	  fakeSpeechToText: false,
-	  fakeChatGPT:      false,
+	  fakeChatLLM:      false,
 	  fakeTextToSpeech: false
       };
 
@@ -34,9 +36,9 @@ export default function Home()
     const [interfaceMode,   setInterfaceMode]   = useState(InterfaceModeEnum.inactive);
     const [microphoneMode,  setMicrophoneMode]  = useState(MicrophoneModeEnum.inactive);
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
-    
-    const [statusText, setStatusText]       = useState("Status: waiting for audio input"); // <string>
-    //const [audioFilename, setAudioFilename] = useState(null);
+
+    const defaultStatusText = "Waiting for audio input";
+    const [statusText, setStatusText]     = useState("Status: " + defaultStatusText);
 
     const [blob, setBlob]                 = useState(null); // <Blob>
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
@@ -63,9 +65,8 @@ export default function Home()
 	    mediaPlayer.current = new MediaPlayer(function() {
 		// callback function, when audio stops playing
 		console.log("mediaPlayer.onstopplaying() callback called!");
-		setStatusText("Status: waiting for audio input");
-                console.log("**** calling setBlob(null)");
-		setBlob(null);
+		updateStatus(defaultStatusText);
+                setBlob(null);
 	    });
 
 	}
@@ -108,38 +109,31 @@ export default function Home()
 
 
     useEffect(() => {
-        console.log("**** useEffect() [messages]");
-        console.log(messages);
 	messagesRef.current = messages;
     }, [messages]);
     
-    const updateStatusCallback = (text) => {
-	setStatusText(text)
-    };
-
-
-    const handleAudioRewind = () => {
-        console.log("handleAudioRewind()");
-        if (mediaPlayer.current.state !== "inactive") {
-            mediaPlayer.current.state = "rewind-to-beginning";
-        }
+    const updateStatus = (text) => {
+	setStatusText("Status: " + text)
     };
 
     const handleAudioPauseToggle = () => {
         console.log("handleAudioPauseToggle()");
         if (mediaPlayer.current.state === "playing") {
             mediaPlayer.current.state = "paused";
+	    updateStatus("Paused");            
         }
         else {
             mediaPlayer.current.state = "playing";
+	    updateStatus("Playing ...");            
         }
     };
 
     const handleAudioPlay = () => {
         console.log("handleAudioPlay()");
         if (mediaPlayer.current.state !== "playing") {
-            //setBlob(null);
             mediaPlayer.current.state = "playing";
+	    updateStatus("Playing ...");            
+            
 	    console.log("Initializing a new AudioContext");
 	    setAudioContext(new AudioContext());
             setBlob(apBlob);
@@ -150,6 +144,8 @@ export default function Home()
         console.log("handleAudioStop()");
         if ((mediaPlayer.current.state === "playing") || (mediaPlayer.current.state === "paused")) {
             mediaPlayer.current.state = "inactive";
+	    updateStatus("Stopped playing");            
+            
 	    setBlob(null);
         }
     };
@@ -211,10 +207,10 @@ export default function Home()
 	                <AudioPlayer
                           mediaPlayer={mediaPlayer}
 	                  autoAudioPlayerMode={audioPlayerMode}
-	                  handleRewind={handleAudioRewind}
 	                  handlePauseToggle={handleAudioPauseToggle}
 	                  handlePlay={handleAudioPlay}
-	                  handleStop={handleAudioStop}                                  
+	                  handleStop={handleAudioStop}
+        		  updateStatusCallback={updateStatus}
                         />
                       </div>
                     </div>
@@ -231,6 +227,7 @@ export default function Home()
 		        barWidth={3}
 		        gap={2}
 		        barColor={'lightblue'}
+        		updateStatusCallback={updateStatus}                        
 		      />
 	            </div>
                     
@@ -244,7 +241,7 @@ export default function Home()
 	          <Microphone
 	            routerOptions={RouterOptions}
                     messagesRef={messagesRef}
-		    updateStatusCallback={updateStatusCallback}
+		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}
                     updateMessagesCallback={updateMessagesCallback}
 	          />
