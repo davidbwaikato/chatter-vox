@@ -127,7 +127,8 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   smoothingTimeConstant = 0.4,
   updateStatusCallback = null,  
 }: Props) => {
-  const [analyser, setAnalyser] = useState<AnalyserNode>();
+  const [analyser   , setAnalyser   ] = useState<AnalyserNode>();
+  const [audioSource, setAudioSource] = useState<SourceNode>();
 
   const [duration , setDuration ] = useState<number>(0.0);
   const [startTime, setStartTime] = useState<number>(0.0);
@@ -156,16 +157,26 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       //console.log(blob);
       
       if (!blob) {
-
+          console.log(`**** mediaPlayer.current = ${mediaPlayer.current}`);
+          console.log(`**** audioContext.state = ${audioContext ? audioContext.state : null}`);
+          if (audioSource) {
+              audioSource.stop(0);
+          }
+          
+          /*
           if (mediaPlayer.current && audioContext) {
               console.log(` audioContext.state = ${audioContext.state}`);
               if (mediaPlayer.current.state === "inactive" && audioContext.state === "running") {
-                  // source.stop(0); // **** ????
-                  audioContext.close();
-                  setAnalyser(null);
-                  resetProgress();
+                  audioSource.stop(0); // **** ????
+                  //setAudioSource(null);
+                  
+                  //audioContext.close();
+                  //setAnalyser(null);
+                  //resetProgress();
+                  
               }
           }
+          */
           
           console.log("Displaying default frequency values of zeros");          
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
@@ -206,27 +217,29 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
 	analyserNode.connect(audioContext.destination);
 	
-	const source = audioContext.createBufferSource();
-	source.buffer = audioBuffer;
-	source.connect(analyserNode);
+	const audioSourceNode = audioContext.createBufferSource();
+        setAudioSource(audioSourceNode);
+	audioSourceNode.buffer = audioBuffer;
+	audioSourceNode.connect(analyserNode);
 
-	source.onended = function() {
+	audioSourceNode.onended = function() {
 	    console.log("Playing sound has ended");
-            source.stop(0);	    
+            //audioSourceNode.stop(0);	    
 	    //playingRef.current = false;
 
 	    //if (audioContext.state !== "closed") {	    
 	    //    audioContext.close();
             //}
-	    setAnalyser(null);
-            resetProgress();
+            setAudioSource(null)
+	    //setAnalyser(null);
+            //resetProgress();
             
 	    mediaPlayer.current.onstopplaying();
 	};
 	
 	if (mediaPlayer.current.state === "playing") {              
-	    console.log("Starting source");
-	    source.start();
+	    console.log("Starting audio source");
+	    audioSourceNode.start();
             setStartTime(audioContext.currentTime);
             updateProgress();
 	}
@@ -237,6 +250,22 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       
   }, [blob]);
 
+    /*
+  useEffect(() => {
+      if (!audioSource) {
+          // shut all the classes related to playing audio down
+          //audioSource.stop(0); // **** ????
+          if (audioContext) {
+              audioContext.close();
+              setAnalyser(null);
+          }
+          resetProgress();
+          
+          return;
+      }
+  }, [audioSource]);
+    */
+    
   useEffect(() => {
       //console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);
       if (!analyser) {
@@ -269,13 +298,6 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       
     const data = new Uint8Array(analyser?.frequencyBinCount);
     
-    //const dataOrig = new Uint8Array(analyser?.frequencyBinCount);
-    //console.log(` data.length = ${data.length}`);
-    //console.log(` data.slice(0,100) = ${data.slice(0,100)}`);
-    // //const data = dataOrig.slice(2,8)
-    // //const data = dataOrig.slice(2,16)
-    //const data = dataOrig;
-
       //console.log(`      -- checking mediaPlayer.state = ${mediaPlayer.current.state}`);
     if (mediaPlayer.current.state === "playing") {
         if (audioContext.state === "suspended") {
@@ -301,22 +323,33 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
         }
         requestAnimationFrame(report);                    
     }
-      else if (mediaPlayer.current.state === "inactive" && audioContext.state === "running") {
+    else if (mediaPlayer.current.state === "inactive") {
       //else if (mediaPlayer.current.state === "inactive") {
 	  //audioContext.suspend();
-          console.log("closing audioContext");
-          console.log(audioContext.state);
-          audioContext.close();
-          // source.stop() // ****
+          if (audioContext && audioContext.state === "suspended") {
+            // This can happen if the user goes from paused to stop
+            // In which case we want the audioContext out of the suspend state
+              audioContext.resume();
+          }
+        
+          if (audioSource) {
+              audioSource.stop(0)
+          }
+          
+          //setAudioSource(null);
+
+          /*
+          if (audioContext.state !== "closed") { // could be 'running' or 'suspended' (from a pause)
+              console.log("closing audioContext");
+              console.log(`  -- audioContext.state = ${audioContext.state}`);
+              audioContext.close();
+          }
+      
+          audioSource.stop(0) // ****
 	  setAnalyser(null);
           resetProgress();
+          */
       }
-      /*
-      else if (mediaPlayer.state === "inactive" && audioContext.state !== "closed") {
-	//audioContext.close();
-	//audioContext.suspend();
-	}*/
-      
   }, [analyser, audioContext ? audioContext.state : null]);
 
   const processFrequencyData = (data: Uint8Array): void => {
