@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 
 import fs from "fs";
 import path from "path";
+import tmp from "tmp";
 
 import * as dotenv from "dotenv";
 import { env } from "../../config/env";
 
 import OpenAI from "openai";
+
+import { sleep, postPapaReoTranscribe } from "../utils";
 
 dotenv.config();
 
@@ -24,7 +27,9 @@ async function POST_FAKE(body) {
     return NextResponse.json(response_data);
 }
 
-async function POST_REAL(body) {
+
+
+async function POST_PAPAREO_REAL(body) {
     const base64Audio = body.audio;
     const audioMimeType = body.mimeType;
     
@@ -36,8 +41,69 @@ async function POST_REAL(body) {
     
     const fileExt  = audioMimeType.replace(/^\w+\/(\w+)(?:;.+)?$/,".$1");    
     const tmpDir   = path.join("public","tmp");
-    const filePath = path.join(tmpDir,"spoken-audio"+fileExt);
 
+    const tmpOptions = {
+	tmpdir: tmpDir,
+	prefix: `spoken-audio--`,
+	postfix: fileExt,
+	keep: true
+    };
+    
+    //const filePathOLD = path.join(tmpDir,"spoken-audio"+fileExt);
+    const filePath = tmp.tmpNameSync(tmpOptions).replace(process.cwd()+"/","");
+    
+    console.log(`audioMimeType = ${audioMimeType}`);
+    console.log(`fileExt = ${fileExt}`);
+    
+    try {
+
+	if (!fs.existsSync(tmpDir)) {
+	    console.log("Creating temporary directory for audio recording: " + tmpDir);
+	    fs.mkdirSync(tmpDir);
+	}
+	
+	
+	fs.writeFileSync(filePath, audio);
+
+	const transcription_text = await postPapaReoTranscribe(filePath, audioMimeType);
+	
+	// Remove the file after use
+	console.log("Supressing deletion of audio file");
+	//fs.unlinkSync(filePath);
+
+	const response_data = { recognizedTextData: {text: transcription_text}, recordedAudioFilename: filePath };
+	console.log(response_data);
+	return NextResponse.json(response_data);
+    }
+    catch (error) {
+	console.error("Error processing audio:", error);
+	return NextResponse.error();
+    }
+}
+
+async function POST_OPENAI_REAL(body) {
+    const base64Audio = body.audio;
+    const audioMimeType = body.mimeType;
+    
+    const audio = Buffer.from(base64Audio, "base64");
+
+    // Example mime types:
+    //   audio/wav
+    //   audio/webm;codecs=opus    
+    
+    const fileExt  = audioMimeType.replace(/^\w+\/(\w+)(?:;.+)?$/,".$1");    
+    const tmpDir   = path.join("public","tmp");
+
+    const tmpOptions = {
+	tmpdir: tmpDir,
+	prefix: `spoken-audio--`,
+	postfix: fileExt,
+	keep: true
+    };
+    
+    //const filePathOLD = path.join(tmpDir,"spoken-audio"+fileExt);
+    const filePath = tmp.tmpNameSync(tmpOptions).replace(process.cwd()+"/","");
+    
     console.log(`audioMimeType = ${audioMimeType}`);
     console.log(`fileExt = ${fileExt}`);
     
@@ -80,7 +146,8 @@ export async function POST(req)
 	returned_response = await POST_FAKE(body);
     }
     else {
-	returned_response = await POST_REAL(body);
+	//returned_response = await POST_OPENAI_REAL(body);
+	returned_response = await POST_PAPAREO_REAL(body);
     }
 
     return returned_response;

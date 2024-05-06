@@ -23,7 +23,7 @@ const RouterOptions = DEBUG ?
       :
       {
           chatLLM: "Claude",
-	  fakeSpeechToText: true,
+	  fakeSpeechToText: false,
 	  fakeChatLLM:      false,
 	  fakeTextToSpeech: false
       };

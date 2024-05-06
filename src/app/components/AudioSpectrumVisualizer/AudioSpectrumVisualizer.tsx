@@ -224,15 +224,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
 	audioSourceNode.onended = function() {
 	    console.log("Playing sound has ended");
-            //audioSourceNode.stop(0);	    
-	    //playingRef.current = false;
-
-	    //if (audioContext.state !== "closed") {	    
-	    //    audioContext.close();
-            //}
-            setAudioSource(null)
-	    //setAnalyser(null);
-            //resetProgress();
+            setAudioSource(null);
             
 	    mediaPlayer.current.onstopplaying();
 	};
@@ -250,22 +242,6 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       
   }, [blob]);
 
-    /*
-  useEffect(() => {
-      if (!audioSource) {
-          // shut all the classes related to playing audio down
-          //audioSource.stop(0); // **** ????
-          if (audioContext) {
-              audioContext.close();
-              setAnalyser(null);
-          }
-          resetProgress();
-          
-          return;
-      }
-  }, [audioSource]);
-    */
-    
   useEffect(() => {
       //console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);
       if (!analyser) {
@@ -335,20 +311,6 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
           if (audioSource) {
               audioSource.stop(0)
           }
-          
-          //setAudioSource(null);
-
-          /*
-          if (audioContext.state !== "closed") { // could be 'running' or 'suspended' (from a pause)
-              console.log("closing audioContext");
-              console.log(`  -- audioContext.state = ${audioContext.state}`);
-              audioContext.close();
-          }
-      
-          audioSource.stop(0) // ****
-	  setAnalyser(null);
-          resetProgress();
-          */
       }
   }, [analyser, audioContext ? audioContext.state : null]);
 

@@ -40,7 +40,7 @@ async function POST_PAPAREO_REAL(body) {
     const audioMimeType = "audio/mpeg";
     
     const tmpDir        = path.join("public","tmp");
-    const pid           = process.pid;
+    //const pid           = process.pid;
 
     const tmpOptions = {
 	tmpdir: tmpDir,
@@ -100,7 +100,7 @@ async function POST_OPENAI_REAL(body) {
     const audioMimeType = "audio/mpeg";
     
     const tmpDir        = path.join("public","tmp");
-    const pid           = process.pid;
+    //const pid           = process.pid;
 
     const tmpOptions = {
 	tmpdir: tmpDir,
