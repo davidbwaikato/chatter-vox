@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import fs   from "fs";
 import path from "path";
 import process from "process";
-//const tmp = require('tmp');
 import tmp from "tmp";
 
 import * as dotenv from "dotenv";
@@ -11,7 +10,7 @@ import { env } from "../../config/env";
 
 import OpenAI from "openai";
 
-import { sleep } from "../utils";
+import { sleep, postPapaReoSynthesize, downloadURL } from "../utils";
 
 dotenv.config();
 
@@ -32,7 +31,8 @@ async function POST_FAKE(body) {
     return NextResponse.json(response_data);
 }
 
-async function POST_REAL(body) {
+
+async function POST_PAPAREO_REAL(body) {
     const text = body.text;
     
     const audioFileType = "mp3";
@@ -44,7 +44,68 @@ async function POST_REAL(body) {
 
     const tmpOptions = {
 	tmpdir: tmpDir,
-	prefix: `synthesized-audio-${pid}--`,
+	//prefix: `synthesized-audio-${pid}--`,
+	prefix: `synthesized-audio--`,
+	postfix: audioFileExt,
+	keep: true
+    };
+        
+    //const audioFilePathOLD = path.join(tmpDir,"synthesized-audio"+audioFileExt);
+    const audioFilePath = tmp.tmpNameSync(tmpOptions).replace(process.cwd()+"/","");
+    
+    //console.log(`audioFilePathOLD = ${audioFilePathOLD}`);
+    console.log(`audioFilePath    = ${audioFilePath}`);
+    
+    try {
+	if (!fs.existsSync(tmpDir)) {
+	    console.log("Creating temporary directory for audio recording: " + tmpDir);
+	    fs.mkdirSync(tmpDir);
+	}
+	
+	// Based on:
+	//    https://platform.openai.com/docs/guides/text-to-speech?lang=node
+	
+	// Voices:
+	//   alloy, echo, fable, onyx, nova, and shimmer
+
+	// Response format:
+	//  mp3, opus, aac, flac, wav, and pcm	
+
+	const audio_url = await postPapaReoSynthesize(text)
+	
+	console.log("PapaReo returned audio_url:");
+	console.log(audio_url);
+
+	const download_status = await downloadURL(audio_url,audioFilePath);		    
+		
+	const response_data = {
+	    synthesizedAudioFilename: audioFilePath,
+	    synthesizedAudioMimeType: audioMimeType
+	};
+	
+	return NextResponse.json(response_data);
+    }
+    catch (error) {
+	console.error("Error synthesizing audio from text:", error);
+	return NextResponse.error();
+    }
+}
+
+
+async function POST_OPENAI_REAL(body) {
+    const text = body.text;
+    
+    const audioFileType = "mp3";
+    const audioFileExt  = "."+audioFileType
+    const audioMimeType = "audio/mpeg";
+    
+    const tmpDir        = path.join("public","tmp");
+    const pid           = process.pid;
+
+    const tmpOptions = {
+	tmpdir: tmpDir,
+	//prefix: `synthesized-audio-${pid}--`,
+	prefix: `synthesized-audio--`,
 	postfix: audioFileExt,
 	keep: true
     };
@@ -116,7 +177,8 @@ export async function POST(req)
 	returned_response = await POST_FAKE(body);
     }
     else {
-	returned_response = await POST_REAL(body);
+	//returned_response = await POST_OPENAI_REAL(body);
+	returned_response = await POST_PAPAREO_REAL(body);
     }      
     
     return returned_response;

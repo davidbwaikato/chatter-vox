@@ -16,7 +16,8 @@ const openai = new OpenAI({
 
 async function POST_FAKE(body) {
     const response_data = {
-	recognizedTextData: { text: 'What is the name of the river that flows through Hamilton, New Zealand?' },
+	//recognizedTextData: { text: 'What is the name of the river that flows through Hamilton, New Zealand?' },
+	recognizedTextData: { text: 'He aha te ingoa o te awa e rere ana i Kirikiriroa, Aotearoa?' }, 
 	recordedAudioFilename: 'public/tmp/spoken-audio.webm'
     };
 
