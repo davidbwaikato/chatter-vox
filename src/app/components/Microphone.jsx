@@ -69,8 +69,8 @@ const Microphone = (props) => {
     };
     */
 
-    const lang_  = props.configOptions.lang;    
-    const it_microphoneInstructions = props.configOptions.interfaceText["_microphoneInstructions_"];
+    const lang_  = props.configOptionsRef.current.lang;    
+    const it_microphoneInstructions = props.configOptionsRef.current.interfaceText["_microphoneInstructions_"];
     
     
     //const micLevelStyle = {

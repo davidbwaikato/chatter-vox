@@ -9,17 +9,7 @@ import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
-
-
-const ConfigOptions = {
-    speechToText : "PapaReo",
-    chatLLM      : "Claude",
-    textToSpeech : "PapaReo",    
-};
       
-
-const Lang = "mi";
-
 const InterfaceText = {
 
     _howCanIHelp_: {
@@ -28,13 +18,12 @@ const InterfaceText = {
     },
     _microphoneInstructions_: {
 	"en": "Press and hold the microphone button to record.",
-	"mi": "pātene hopu reo."
+	"mi": "Pātene hopu reo."
     },
 
     _statusLabel_: {
 	"en": "Status",
-	//"mi": "<?Translation for Status?>"
-	"mi": "Tūnga"
+	"mi": "Tūnga" // Translated via Google, then checked against some te reo dictionary resources
     },
     _statusWaiting_: {
 	"en": "Waiting for audio input ...",
@@ -48,6 +37,15 @@ const InterfaceText = {
 	"en": "Text recognition of recorded audio ...",
 	"mi": "E whakarite ana te kupu kōrero ki te kupu tuhi..."
     },
+    _statusSpeechToTextCompleted_: {
+	"en": "Spoken text recognised",
+	"mi": "Kua hopu kōrero"
+    },
+    _textInfoRecognisedTextSpoken_: {
+	"en": "Recognised spoken text",
+	"mi": "Ko ngā kōrero kua hopu"
+    },
+    
     _statusChatLLMProcessing_: {
 	"en": "Recognised text being processed by Claude ...",
 	"mi": "E hanga whakaaro ana a Claude ...",
@@ -60,26 +58,79 @@ const InterfaceText = {
 	"en": "Playing the synthesized audio response ...",
 	"mi": "E kōrero ana ..."
     },
+
+    _statusChatLLMResponseReceived_: {
+	"en": "Claude's response received",
+	"mi": "Kua whakahoki kōrero mai a Claude"
+    },
+    _statusChatLLMNoResponseReceived_: {
+	"en": "No response received from Claude",
+	"mi": "Kāore a Claude i whakahoki kōrero mai"
+    },
+
+    _statusNetworkError_: {
+	"en": "A network error occured",
+	"mi": "Kua whati te tūhononga rorohiko"
+    },
+    _textInfoNetworkError_: {
+	"en": "A network error occured when trying to process the recognised text",
+	"mi": "Kua whati te tūhononga rorohiko i a Claude e whakaaro ana"
+    },
+
+        
+    _statusAudioPlayerPaused_: {
+	"en": "Paused",
+	"mi": "E tū ana"
+    },
+    _statusAudioPlayerPlaying_: {
+	"en": "Playing",
+	"mi": "E kōrero ana",
+    },
+    _statusAudioPlayerStopped_: {
+	"en": "Stopped playing",
+	"mi": "Kua mutu te kōrero",
+    },
+    _statusMicrophoneRecordingStopped_: {
+	"en": "Stopped recording",
+	"mi": "Kua mutu te hopu"
+    },
+    
+    
     _LLMSays_: {
 	"en": "Claude says",
 	"mi": "ki tā Claude"
     }
 };
 
-ConfigOptions["interfaceText"] = InterfaceText;
-ConfigOptions["lang"] = Lang;
+const DefaultLang = "mi";
+
+
+const DefaultConfigOptions = {
+    speechToText : "PapaReo",
+    chatLLM      : "Claude",
+    textToSpeech : "PapaReo",
+
+    lang: DefaultLang,
+    interfaceText: InterfaceText
+};
+
 
 const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "playing":3, "paused":4 });
 
 export default function Home()
 {
+    //const [ConfigOptions, setConfigOptions] = useState(DefaultConfigOptions);
+    const [Lang,          setLang         ] = useState(DefaultLang);
+    
     const [interfaceMode,   setInterfaceMode]   = useState(InterfaceModeEnum.inactive);
     const [microphoneMode,  setMicrophoneMode]  = useState(MicrophoneModeEnum.inactive);
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
 
     //const defaultStatusText = "Waiting for audio input";
-    const defaultStatusText = InterfaceText["_statusWaiting_"][Lang];
-    const [statusText, setStatusText]     = useState(InterfaceText["_statusLabel_"][Lang] + ": " + defaultStatusText);
+    //const defaultStatusText = ConfigOptions.interfaceText["_statusWaiting_"][Lang];
+    const defaultStatusText = DefaultConfigOptions.interfaceText["_statusWaiting_"][Lang];
+    // //const [statusText, setStatusText]     = useState(ConfigOptions.interfaceText["_statusLabel_"][DefaultLang] + ": " + defaultStatusText);
+    const [statusText, setStatusText]     = useState(defaultStatusText);
 
     const [blob, setBlob]                 = useState(null); // <Blob>
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
@@ -89,9 +140,10 @@ export default function Home()
         { role: "system",    content: "You are a helpful assistant" },
         { role: "assistant", content: "How can I you today?" }
     ]);
-    const messagesRef = useRef(null);
-    
-    const mediaPlayer = useRef(null); // <MediaPlayer>
+
+    const configOptionsRef = useRef(DefaultConfigOptions); // Currently, a generic object/hashmap
+    const messagesRef      = useRef(null);    
+    const mediaPlayer      = useRef(null); // <MediaPlayer>
     
     const mediaPlayerWidth     = 400;
     const mediaPlayerHeight    = 132;
@@ -112,6 +164,34 @@ export default function Home()
 
 	}
     }, []);
+
+
+    useEffect(() => {
+	const queryParams = new URLSearchParams(window.location.search);
+	const lang_param = queryParams.get('lang'); 
+
+	if (lang_param) {
+	    
+	    if (lang_param != Lang) {
+		//const NewConfigOptions = {...ConfigOptions, "lang": lang_param}
+
+		// //NewConfigOptions["lang"] = lang_param;
+		setLang(lang_param);
+		//setConfigOptions(NewConfigOptions);
+	    }
+	}
+    }, []);
+    
+
+    useEffect(() => {
+	//const NewConfigOptions = {...DefaultConfigOptions, "lang": Lang}
+	//configOptionsRef.current = NewConfigOptions
+	//setConfigOptions(NewConfigOptions);
+
+	configOptionsRef.current.lang = Lang;
+	
+    }, [Lang]);
+    
 
     useEffect(() => {
 	if (blob !== null) {
@@ -154,26 +234,30 @@ export default function Home()
     }, [messages]);
     
     const updateStatus = (text_marker) => {
+	console.log("*** updateStatus(), Lang = " + Lang + ", text_marker = " + text_marker);
 	let lang_text = text_marker;
 	
-	if (text_marker in InterfaceText) {
+	if (text_marker in configOptionsRef.current.interfaceText) {
 	    
-	    lang_text = InterfaceText[text_marker][Lang];
+	    lang_text = configOptionsRef.current.interfaceText[text_marker][Lang];
 	}
 
-	const status_label = InterfaceText["_statusLabel_"][Lang];
-	setStatusText(status_label+ ": " + lang_text)
+	const status_label = configOptionsRef.current.interfaceText["_statusLabel_"][Lang];
+
+	// Te Taka requested that there be no 'status: ' text
+	//setStatusText(status_label+ ": " + lang_text)
+	setStatusText(lang_text)
     };
 
     const handleAudioPauseToggle = () => {
         console.log("handleAudioPauseToggle()");
         if (mediaPlayer.current.state === "playing") {
             mediaPlayer.current.state = "paused";
-	    updateStatus("Paused"); // NT
+	    updateStatus("_statusAudioPlayerPaused_");
         }
         else {
             mediaPlayer.current.state = "playing";
-	    updateStatus("Playing ..."); // NT           
+	    updateStatus("_statusAudioPlayerPlaying_");
         }
     };
 
@@ -181,7 +265,7 @@ export default function Home()
         console.log("handleAudioPlay()");
         if (mediaPlayer.current.state !== "playing") {
             mediaPlayer.current.state = "playing";
-	    updateStatus("Playing ..."); // NT
+	    updateStatus("_statusAudioPlayerPlaying_");
             
 	    console.log("Initializing a new AudioContext");
 	    setAudioContext(new AudioContext());
@@ -193,7 +277,7 @@ export default function Home()
         console.log("handleAudioStop()");
         if ((mediaPlayer.current.state === "playing") || (mediaPlayer.current.state === "paused")) {
             mediaPlayer.current.state = "inactive";
-	    updateStatus("Stopped playing"); // NT
+	    updateStatus("_statusAudioPlayerStopped_");
             
 	    setBlob(null);
         }
@@ -239,9 +323,9 @@ export default function Home()
 
         const updatedMessages = [...messages, userMessage, returnedTopMessage];
         setMessages(updatedMessages);	        
-    };
-
-    const lang_HowCanIHelp = InterfaceText["_howCanIHelp_"][Lang];
+    }
+;
+    const lang_HowCanIHelp = configOptionsRef.current.interfaceText["_howCanIHelp_"][Lang];
     
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
@@ -290,7 +374,7 @@ export default function Home()
 	            </div>
 	          </div>
 	          <Microphone
-	            configOptions={ConfigOptions}
+	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}

@@ -76,18 +76,60 @@ export const useRecordVoice = (props) => {
 	    }
 	}
     };
+
     
     const stopRecording = () => {
 	if (mediaRecorder) {
-	    props.updateStatusCallback("Stopped recording"); // NT
+	    props.updateStatusCallback("_statusMicrophoneRecordingStopped_");
 	    isRecording.current = false;
 	    mediaRecorder.stop();
             setRecording(false);
 	}
     };
 
+    // StackOverflow posting on how to interrupt a fetch()    
+    //   https://stackoverflow.com/questions/31061838/how-do-i-cancel-an-http-fetch-request
+    /*
+
+
+ // Create an instance.
+    const controller = new AbortController()
+    const signal = controller.signal
+
+    //
+    // // Register a listenr.
+    // signal.addEventListener("abort", () => {
+    //     console.log("aborted!")
+    // })
+    
+
+
+    function beginFetching() {
+        console.log('Now fetching');
+        var urlToFetch = "https://httpbin.org/delay/3";
+
+        fetch(urlToFetch, {
+                method: 'get',
+                signal: signal,
+            })
+            .then(function(response) {
+                console.log(`Fetch complete. (Not aborted)`);
+            }).catch(function(err) {
+                console.error(` Err: ${err}`);
+            });
+    }
+
+
+    function abortFetching() {
+        console.log('Now aborting');
+        // Abort.
+        controller.abort()
+    }
+    */
+    
+
     const getSynthesizedSpeech = async (text) => {
-	//props.updateStatusCallback(props.configOptions.chatLLM + "'s response being synthesized as audio ...");
+	//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response being synthesized as audio ...");
 	props.updateStatusCallback("_statusTextToSpeechProcessing_");
 	
 	try {
@@ -98,7 +140,7 @@ export const useRecordVoice = (props) => {
 		},
 		body: JSON.stringify({
 		    text: text,
-		    configOptions: props.configOptions
+		    configOptions: props.configOptionsRef.current
 		}),
 	    }).then((res) => {
 		let json_str = null;
@@ -136,7 +178,7 @@ export const useRecordVoice = (props) => {
 
     
     const getPromptResponse = async (promptText) => {
-	//props.updateStatusCallback("Recognised text being processed by " + props.configOptions.chatLLM);
+	//props.updateStatusCallback("Recognised text being processed by " + props.configOptionsRef.current.chatLLM);
 	props.updateStatusCallback("_statusChatLLMProcessing_");
 		    
 	//console.log("**** getPromptResponse");
@@ -149,7 +191,7 @@ export const useRecordVoice = (props) => {
 		    "Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-		    configOptions: props.configOptions,
+		    configOptions: props.configOptionsRef.current,
 		    //messages: JSON.parse(props.messages),
 		    messages: props.messagesRef.current,
 		    // //messages: messages,
@@ -169,25 +211,33 @@ export const useRecordVoice = (props) => {
 		const result_message_pair = response.result;
 		console.log(result_message_pair);
 		const chatResponseText = result_message_pair.returnedTopMessage.content;	    
-		props.updateStatusCallback(props.configOptions.chatLLM + "'s response received"); // NT
+		//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response received");
+		props.updateStatusCallback("_statusChatLLMResponseReceived_");
 		props.updateMessagesCallback(result_message_pair);
 		
-		//setText(props.configOptions.chatLLM + " says: " + chatResponseText); // ****
-		const lang = props.configOptions.lang;
-		const lang_llm_says = props.configOptions.interfaceText["_LLMSays_"][lang];
+		//setText(props.configOptionsRef.current.chatLLM + " says: " + chatResponseText); // ****
+		const lang = props.configOptionsRef.current.lang;
+		const lang_llm_says = props.configOptionsRef.current.interfaceText["_LLMSays_"][lang];
 		setText(lang_llm_says + ": " + chatResponseText); // ****
 		
 		getSynthesizedSpeech(chatResponseText);		
 	    }
 	    else {		
-		setText("No response received from " + props.configOptions.chatLLM);
-		props.updateStatusCallback("No response received from " + props.configOptions.chatLLM); // NT
+		//setText("No response received from " + props.configOptionsRef.current.chatLLM);
+		//props.updateStatusCallback("No response received from " + props.configOptionsRef.current.chatLLM);
+
+		const lang = props.configOptionsRef.current.lang;
+		const lang_llm_no_response = props.configOptionsRef.current.interfaceText["_statusChatLLMNoResponseReceived_"][lang];
+		setText(lang_llm_no_response);
+		props.updateStatusCallback("_statusChatLLMNoResponseReceived_");		
 	    }
 	    
 	}
 	catch (error) {
-	    setText("A network error occured when trying to process the recognised text"); // NT
-	    props.updateStatusCallback("A network error occured"); // NT
+	    const lang = props.configOptionsRef.current.lang;
+	    const lang_ti_network_error = props.configOptionsRef.current.interfaceText["_textInfoNetworkError_"][lang];
+	    setText(lang_ti_network_error);
+	    props.updateStatusCallback("_statusNetworkError_");
 	    
 	    console.error(error);
 	}
@@ -206,7 +256,7 @@ export const useRecordVoice = (props) => {
               body: JSON.stringify({
 		  audio: base64data,
 		  mimeType: mimeType,
-		  configOptions: props.configOptions		  
+		  configOptions: props.configOptionsRef.current
               }),
 	  }).then((res) => {
 	      let json_str = null;
@@ -219,9 +269,12 @@ export const useRecordVoice = (props) => {
 	  if (response != null) {
 	      const { text } = response.recognizedTextData;
 	      //const audioFilename  = response.recordedAudioFilename;
+
+	      const lang = props.configOptionsRef.current.lang;
+	      const lang_ti_recognised = props.configOptionsRef.current.interfaceText["_textInfoRecognisedTextSpoken_"][lang];	      
+	      setText(lang_ti_recognised+": " + text);
 	      
-	      setText("Recognised spoken text: " + text); // NT
-	      props.updateStatusCallback("Spoken text recognised"); // NT
+	      props.updateStatusCallback("_statusSpeechToTextCompleted_");
 	      
 	      //setAudioFilename(audioFilename);
 	      // Do the following line if you want the audio to be played
