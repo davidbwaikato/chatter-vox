@@ -74,7 +74,7 @@ function OLD() {
 }
 */
 
-async function POST_REAL_OPENAI(body) {
+async function POST_OPENAI(body) {
 
     const messages   = body.messages;
     const promptText = body.promptText;
@@ -113,7 +113,7 @@ async function POST_REAL_OPENAI(body) {
 }
 
 
-async function POST_REAL_ANTHROPIC(body)
+async function POST_CLAUDE(body)
 {
 
     const messages   = body.messages;
@@ -135,6 +135,10 @@ async function POST_REAL_ANTHROPIC(body)
     updatedMessages.shift();
     updatedMessages.shift();
 
+    updatedMessages.unshift({"role": "assistant", "content": "Tēnā koe. Ka āhei ahau ki te whakahoki i ētahi whakautu i te reo Māori, engari kāore anō ā tō̅ku mōhio i te reo Māori e tino whānui ana. Mehemea ka tīmatahia koe ki te kōrero Māori, ka whakaputa ā tōku engari kāore ā tōku i te tino pūkenga ki tēnei reo. He pai kē ki ahau te whakautu i te reo Ingarihi."});
+    updatedMessages.unshift({"role": "user", "content": "You are an chatbot the always gives your answers in te reo Maori"});
+
+    
     //console.log("[Anthropic/Claude route.js] updatedMessages:");
     //console.log(updatedMessages);
 
@@ -164,21 +168,22 @@ async function POST_REAL_ANTHROPIC(body)
     
 }
 
+const PostLookup = {
+    "fake"      : POST_FAKE,
+    "Claude"    : POST_CLAUDE,
+    "OpenAI"    : POST_OPENAI
+};
+
     
 export async function POST(req)
-{
-    
+{    
     const body = await req.json();
-    const routerOptions = body.routerOptions;
+    const configOptions = body.configOptions;
 
-    let returned_response = null;
-    if (routerOptions.fakeChatLLM) {
-	returned_response = await POST_FAKE(body);
-    }
-    else {
-	//returned_response = await POST_REAL_OPENAI(body);
-	returned_response = await POST_REAL_ANTHROPIC(body);
-    }
-    
+    //console.log(configOptions);
+    const post_lookup_fn = PostLookup[configOptions.chatLLM];
+
+    const returned_response = post_lookup_fn(body);
+
     return returned_response;
 }

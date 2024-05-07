@@ -32,7 +32,7 @@ async function POST_FAKE(body) {
 }
 
 
-async function POST_PAPAREO_REAL(body) {
+async function POST_PAPAREO(body) {
     const text = body.text;
     
     const audioFileType = "mp3";
@@ -44,7 +44,6 @@ async function POST_PAPAREO_REAL(body) {
 
     const tmpOptions = {
 	tmpdir: tmpDir,
-	//prefix: `synthesized-audio-${pid}--`,
 	prefix: `synthesized-audio--`,
 	postfix: audioFileExt,
 	keep: true
@@ -92,7 +91,7 @@ async function POST_PAPAREO_REAL(body) {
 }
 
 
-async function POST_OPENAI_REAL(body) {
+async function POST_OPENAI(body) {
     const text = body.text;
     
     const audioFileType = "mp3";
@@ -167,19 +166,21 @@ async function POST_OPENAI_REAL(body) {
     }
 }
 
+const PostLookup = {
+    "fake"    : POST_FAKE,
+    "PapaReo" : POST_PAPAREO,
+    "OpenAI"  : POST_OPENAI
+};
+
+
 export async function POST(req)
 {    
     const body = await req.json();
-    const routerOptions = body.routerOptions;
+    const configOptions = body.configOptions;
 
-    let returned_response = null;
-    if (routerOptions.fakeTextToSpeech) {
-	returned_response = await POST_FAKE(body);
-    }
-    else {
-	//returned_response = await POST_OPENAI_REAL(body);
-	returned_response = await POST_PAPAREO_REAL(body);
-    }      
+    const post_lookup_fn = PostLookup[configOptions.textToSpeech];
+
+    const returned_response = post_lookup_fn(body);
     
     return returned_response;
 }

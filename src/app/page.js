@@ -10,24 +10,64 @@ import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
 
-//const DEBUG = true;
-const DEBUG = false;
 
-const RouterOptions = DEBUG ?
-      {
-          chatLLM: "FakeLLM",
-	  fakeSpeechToText: true,
-	  fakeChatLLM:      true,
-	  fakeTextToSpeech: true
-      }
-      :
-      {
-          chatLLM: "Claude",
-	  fakeSpeechToText: false,
-	  fakeChatLLM:      false,
-	  fakeTextToSpeech: false
-      };
+const ConfigOptions = {
+    speechToText : "PapaReo",
+    chatLLM      : "Claude",
+    textToSpeech : "PapaReo",    
+};
+      
 
+const Lang = "mi";
+
+const InterfaceText = {
+
+    _howCanIHelp_: {
+	"en": "How can I help you today?",
+	"mi": "Kōrero mai ..."
+    },
+    _microphoneInstructions_: {
+	"en": "Press and hold the microphone button to record.",
+	"mi": "pātene hopu reo."
+    },
+
+    _statusLabel_: {
+	"en": "Status",
+	//"mi": "<?Translation for Status?>"
+	"mi": "Tūnga"
+    },
+    _statusWaiting_: {
+	"en": "Waiting for audio input ...",
+	"mi": "E whanga ana ki tō reo ..."
+    },
+    _statusRecording_: {
+	"en": "Recording ...",
+	"mi": "E hopu ana ..."
+    },
+    _statusSpeechToTextProcessing_: {
+	"en": "Text recognition of recorded audio ...",
+	"mi": "E whakarite ana te kupu kōrero ki te kupu tuhi..."
+    },
+    _statusChatLLMProcessing_: {
+	"en": "Recognised text being processed by Claude ...",
+	"mi": "E hanga whakaaro ana a Claude ...",
+    },
+    _statusTextToSpeechProcessing_: {
+	"en": "Claude's response being synthesized as audio ...",
+	"mi": "E whakarite ana te kupu tuhi ki te kupu kōrero ..."
+    },
+    _statusPlayingSynthesizedResult_: {
+	"en": "Playing the synthesized audio response ...",
+	"mi": "E kōrero ana ..."
+    },
+    _LLMSays_: {
+	"en": "Claude says",
+	"mi": "ki tā Claude"
+    }
+};
+
+ConfigOptions["interfaceText"] = InterfaceText;
+ConfigOptions["lang"] = Lang;
 
 const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "playing":3, "paused":4 });
 
@@ -37,8 +77,9 @@ export default function Home()
     const [microphoneMode,  setMicrophoneMode]  = useState(MicrophoneModeEnum.inactive);
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
 
-    const defaultStatusText = "Waiting for audio input";
-    const [statusText, setStatusText]     = useState("Status: " + defaultStatusText);
+    //const defaultStatusText = "Waiting for audio input";
+    const defaultStatusText = InterfaceText["_statusWaiting_"][Lang];
+    const [statusText, setStatusText]     = useState(InterfaceText["_statusLabel_"][Lang] + ": " + defaultStatusText);
 
     const [blob, setBlob]                 = useState(null); // <Blob>
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
@@ -112,19 +153,27 @@ export default function Home()
 	messagesRef.current = messages;
     }, [messages]);
     
-    const updateStatus = (text) => {
-	setStatusText("Status: " + text)
+    const updateStatus = (text_marker) => {
+	let lang_text = text_marker;
+	
+	if (text_marker in InterfaceText) {
+	    
+	    lang_text = InterfaceText[text_marker][Lang];
+	}
+
+	const status_label = InterfaceText["_statusLabel_"][Lang];
+	setStatusText(status_label+ ": " + lang_text)
     };
 
     const handleAudioPauseToggle = () => {
         console.log("handleAudioPauseToggle()");
         if (mediaPlayer.current.state === "playing") {
             mediaPlayer.current.state = "paused";
-	    updateStatus("Paused");            
+	    updateStatus("Paused"); // NT
         }
         else {
             mediaPlayer.current.state = "playing";
-	    updateStatus("Playing ...");            
+	    updateStatus("Playing ..."); // NT           
         }
     };
 
@@ -132,7 +181,7 @@ export default function Home()
         console.log("handleAudioPlay()");
         if (mediaPlayer.current.state !== "playing") {
             mediaPlayer.current.state = "playing";
-	    updateStatus("Playing ...");            
+	    updateStatus("Playing ..."); // NT
             
 	    console.log("Initializing a new AudioContext");
 	    setAudioContext(new AudioContext());
@@ -144,7 +193,7 @@ export default function Home()
         console.log("handleAudioStop()");
         if ((mediaPlayer.current.state === "playing") || (mediaPlayer.current.state === "paused")) {
             mediaPlayer.current.state = "inactive";
-	    updateStatus("Stopped playing");            
+	    updateStatus("Stopped playing"); // NT
             
 	    setBlob(null);
         }
@@ -192,13 +241,15 @@ export default function Home()
         setMessages(updatedMessages);	        
     };
 
+    const lang_HowCanIHelp = InterfaceText["_howCanIHelp_"][Lang];
+    
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
 	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
 
 	        <div className="flex flex-col justify-center items-center">
 	          <div className="textmessage pb-2" style={{width: interfaceWidth+'px'}} >                  
-	            How can I help you today?
+	            {lang_HowCanIHelp}
 	          </div>	    	    
 
                   <div style={{backgroundColor: '#f4f4f4', padding: '0.5rem 0.5rem 0 0.5rem'}}>
@@ -239,7 +290,7 @@ export default function Home()
 	            </div>
 	          </div>
 	          <Microphone
-	            routerOptions={RouterOptions}
+	            configOptions={ConfigOptions}
                     messagesRef={messagesRef}
 		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}

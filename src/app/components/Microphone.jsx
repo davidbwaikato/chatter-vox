@@ -59,14 +59,19 @@ const Microphone = (props) => {
     const containerStyle = {
         backgroundColor: micBackgroundColor()
     };
-    
+
+    /*
     const lang_ = "en";
     // Language independent text messages
     const tm_how_to_record_ = {
 	'en': "Press and hold the microphone button to record.",
 	'mi': "Patōhia me te pupuri i te pātene hopuoro hei tuhi"
     };
-			       
+    */
+
+    const lang_  = props.configOptions.lang;    
+    const it_microphoneInstructions = props.configOptions.interfaceText["_microphoneInstructions_"];
+    
     
     //const micLevelStyle = {
     //    visibility: recording ? 'visible' : 'hidden'
@@ -88,7 +93,7 @@ const Microphone = (props) => {
                  onContextMenu={(e)=> e.preventDefault()} >
             <IconMicrophone micLevel={micLevelCapped} micLevelCliprect={micLevelCliprect} />
         </button>
-	<p className="textmessage italic">{tm_how_to_record_[lang_]}</p>
+	<p className="textmessage italic">{it_microphoneInstructions[lang_]}</p>
 	    
 	<p style={micLevelStyle} >Mic level: {micLevel}</p>
 	<p className="textmessage">{text}</p>

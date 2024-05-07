@@ -65,7 +65,8 @@ export const useRecordVoice = (props) => {
 		stopRecording();
 	    }
 	    else {
-		props.updateStatusCallback("Recording ...");
+		//props.updateStatusCallback("Recording ...");
+		props.updateStatusCallback("_statusRecording_");
 		
 		isRecording.current = true;
 		// Controlling the timeslice to .start() to be 1000, based on OpenAI Whisper <=> Safari issue
@@ -78,7 +79,7 @@ export const useRecordVoice = (props) => {
     
     const stopRecording = () => {
 	if (mediaRecorder) {
-	    props.updateStatusCallback("Stopped recording");
+	    props.updateStatusCallback("Stopped recording"); // NT
 	    isRecording.current = false;
 	    mediaRecorder.stop();
             setRecording(false);
@@ -86,7 +87,8 @@ export const useRecordVoice = (props) => {
     };
 
     const getSynthesizedSpeech = async (text) => {
-	props.updateStatusCallback(props.routerOptions.chatLLM + "'s response being synthesized as audio ...");
+	//props.updateStatusCallback(props.configOptions.chatLLM + "'s response being synthesized as audio ...");
+	props.updateStatusCallback("_statusTextToSpeechProcessing_");
 	
 	try {
 	    const response = await fetch("/api/textToSpeech", {
@@ -96,7 +98,7 @@ export const useRecordVoice = (props) => {
 		},
 		body: JSON.stringify({
 		    text: text,
-		    routerOptions: props.routerOptions
+		    configOptions: props.configOptions
 		}),
 	    }).then((res) => {
 		let json_str = null;
@@ -122,7 +124,7 @@ export const useRecordVoice = (props) => {
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
 		      .then(response => response.blob());
 
-		props.updateStatusCallback("Playing the synthesized audio response ...");
+		props.updateStatusCallback("_statusPlayingSynthesizedResult_");		    
 		props.playAudioBlobCallback(synthesizedAudioBlob);
 
 	    }
@@ -134,7 +136,9 @@ export const useRecordVoice = (props) => {
 
     
     const getPromptResponse = async (promptText) => {
-	props.updateStatusCallback("Recognised text being processed by " + props.routerOptions.chatLLM);
+	//props.updateStatusCallback("Recognised text being processed by " + props.configOptions.chatLLM);
+	props.updateStatusCallback("_statusChatLLMProcessing_");
+		    
 	//console.log("**** getPromptResponse");
 	//console.log("     " + props.messagesRef.current);
 	
@@ -145,7 +149,7 @@ export const useRecordVoice = (props) => {
 		    "Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-		    routerOptions: props.routerOptions,
+		    configOptions: props.configOptions,
 		    //messages: JSON.parse(props.messages),
 		    messages: props.messagesRef.current,
 		    // //messages: messages,
@@ -165,21 +169,25 @@ export const useRecordVoice = (props) => {
 		const result_message_pair = response.result;
 		console.log(result_message_pair);
 		const chatResponseText = result_message_pair.returnedTopMessage.content;	    
-		props.updateStatusCallback(props.routerOptions.chatLLM + "'s response received");
+		props.updateStatusCallback(props.configOptions.chatLLM + "'s response received"); // NT
 		props.updateMessagesCallback(result_message_pair);
 		
-		setText(props.routerOptions.chatLLM + " says: " + chatResponseText); // ****
+		//setText(props.configOptions.chatLLM + " says: " + chatResponseText); // ****
+		const lang = props.configOptions.lang;
+		const lang_llm_says = props.configOptions.interfaceText["_LLMSays_"][lang];
+		setText(lang_llm_says + ": " + chatResponseText); // ****
+		
 		getSynthesizedSpeech(chatResponseText);		
 	    }
 	    else {		
-		setText("No response received from " + props.routerOptions.chatLLM);
-		props.updateStatusCallback("No response received from " + props.routerOptions.chatLLM);
+		setText("No response received from " + props.configOptions.chatLLM);
+		props.updateStatusCallback("No response received from " + props.configOptions.chatLLM); // NT
 	    }
 	    
 	}
 	catch (error) {
-	    setText("A network error occured when trying to process the recognised text");
-	    props.updateStatusCallback("A network error occured");
+	    setText("A network error occured when trying to process the recognised text"); // NT
+	    props.updateStatusCallback("A network error occured"); // NT
 	    
 	    console.error(error);
 	}
@@ -187,7 +195,7 @@ export const useRecordVoice = (props) => {
     
     
     const getText = async (blob, base64data, mimeType) => {		    
-	props.updateStatusCallback("Text recognition of recorded audio ...");
+	props.updateStatusCallback("_statusSpeechToTextProcessing_");
 	
 	try {
 	  const response = await fetch("/api/speechToText", {
@@ -198,7 +206,7 @@ export const useRecordVoice = (props) => {
               body: JSON.stringify({
 		  audio: base64data,
 		  mimeType: mimeType,
-		  routerOptions: props.routerOptions		  
+		  configOptions: props.configOptions		  
               }),
 	  }).then((res) => {
 	      let json_str = null;
@@ -212,8 +220,8 @@ export const useRecordVoice = (props) => {
 	      const { text } = response.recognizedTextData;
 	      //const audioFilename  = response.recordedAudioFilename;
 	      
-	      setText("Recognised spoken text: " + text);
-	      props.updateStatusCallback("Spoken text recognised");
+	      setText("Recognised spoken text: " + text); // NT
+	      props.updateStatusCallback("Spoken text recognised"); // NT
 	      
 	      //setAudioFilename(audioFilename);
 	      // Do the following line if you want the audio to be played

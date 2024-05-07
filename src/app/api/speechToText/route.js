@@ -29,7 +29,7 @@ async function POST_FAKE(body) {
 
 
 
-async function POST_PAPAREO_REAL(body) {
+async function POST_PAPAREO(body) {
     const base64Audio = body.audio;
     const audioMimeType = body.mimeType;
     
@@ -81,7 +81,7 @@ async function POST_PAPAREO_REAL(body) {
     }
 }
 
-async function POST_OPENAI_REAL(body) {
+async function POST_OPENAI(body) {
     const base64Audio = body.audio;
     const audioMimeType = body.mimeType;
     
@@ -136,11 +136,22 @@ async function POST_OPENAI_REAL(body) {
     }
 }
 
+const PostLookup = {
+    "fake"    : POST_FAKE,
+    "PapaReo" : POST_PAPAREO,
+    "OpenAI"  : POST_OPENAI
+};
+
 export async function POST(req)
 {
     const body = await req.json();
-    const routerOptions = body.routerOptions;
-    
+    const configOptions = body.configOptions;
+
+    //console.log(configOptions);
+    const post_lookup_fn = PostLookup[configOptions.speechToText];
+
+    const returned_response = post_lookup_fn(body);
+    /*
     let returned_response = null;
     if (routerOptions.fakeSpeechToText) {
 	returned_response = await POST_FAKE(body);
@@ -149,7 +160,8 @@ export async function POST(req)
 	//returned_response = await POST_OPENAI_REAL(body);
 	returned_response = await POST_PAPAREO_REAL(body);
     }
-
+    */
+    
     return returned_response;
 }
 
