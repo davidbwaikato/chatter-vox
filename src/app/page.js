@@ -21,6 +21,15 @@ const InterfaceText = {
 	"mi": "Pātene hopu reo."
     },
 
+    _showtext_: {
+	"en": "Show Text",
+	"mi": "Whakaatu Kupu"
+    },
+    _hidetext_: {
+	"en": "Hide Text",
+	"mi": "Huna Kupu"
+    },
+    
     _statusLabel_: {
 	"en": "Status",
 	"mi": "Tūnga" // Translated via Google, then checked against some te reo dictionary resources
@@ -103,9 +112,13 @@ const InterfaceText = {
 };
 
 const DefaultLang = "mi";
+//const DefaultLang = "en";
 
 
 const DefaultConfigOptions = {
+    //speechToText : "OpenAI",
+    //chatLLM      : "OpenAI",
+    //textToSpeech : "OpenAI",
     speechToText : "PapaReo",
     chatLLM      : "Claude",
     textToSpeech : "PapaReo",

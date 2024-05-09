@@ -15,6 +15,8 @@ const Microphone = (props) => {
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isHover,     setIsHover]     = useState(false);
 
+    const [showText,    setShowText]    = useState(false);
+    
     const handleMouseEnter = () => {
         setIsHover(true);
     };
@@ -81,6 +83,71 @@ const Microphone = (props) => {
         display: 'none'
     };
 
+    const showTextBlockCheck = () => {
+        if (text && text !== "") {
+            return 'block';
+        }
+        else {
+            return 'none';
+        }
+    };
+
+    
+    const showTextBlockStyle = {
+        //minWidth: '446px',
+        minWidth: '876px',
+        backgroundColor: '#F4F4F4',
+        padding: '0.5rem 0.5rem 0.5rem 0.5rem',
+        display: showTextBlockCheck()
+    };
+
+
+    const showTextMessageCheck = () => {
+        if (showText) {
+            return 'block';
+            /*
+            return {
+                maxHeight: "500px",
+                transition: "max-height 2.5s ease-in"
+            };
+*/
+
+            
+        }
+        else {
+            return 'none';
+            /*
+            return {
+                maxHeight: 0,
+                transition: "max-height 1.5s ease-out",
+                overflow: "hidden",
+            };
+            */
+        }
+    };
+
+    
+    const showTextMessageStyle = {
+        display: showTextMessageCheck()
+    };
+    
+
+    //const showTextMessageStyle = showTextMessageCheck();
+    
+    const handleShowHideToggle = (event) => {
+        if (showText) {
+            console.log("Changing showText from true to false => so message should be Hide Text");
+            setShowText(false);
+        }
+        else {
+            console.log("Changing showText from false to true => so message should be Show Text");
+            setShowText(true);
+        }        
+    };
+
+    const it_showtext = props.configOptionsRef.current.interfaceText["_showtext_"];
+    const it_hidetext = props.configOptionsRef.current.interfaceText["_hidetext_"];
+          
     return (
       <div className="flex flex-col justify-center items-center p-3">
         <button className="border-none bg-transparent w-14 rounded-full" style={containerStyle}
@@ -95,11 +162,26 @@ const Microphone = (props) => {
         </button>
 	<p className="textmessage italic">{it_microphoneInstructions[lang_]}</p>
 	    
-	<p style={micLevelStyle} >Mic level: {micLevel}</p>
-	<p className="textmessage">{text}</p>
+	<p style={micLevelStyle}>Mic level: {micLevel}</p>
 
+        <div style={{'minHeight': '300px'}}>        
+          <div className="show-hide-block" style={showTextBlockStyle}>
+            <div>
+              <button id="show-hide-text"
+                      onClick={handleShowHideToggle}
+                >
+                <div style={{verticalAlign: 'text-top'}}>{showText ? "▽ " + it_hidetext[lang_] : "▷ "+ it_showtext[lang_]}</div>
+              </button>
+            </div>
+	    <p id="mic-text-message" className="textmessage" style={showTextMessageStyle}>
+              {text}
+            </p>
+          </div>
+        </div>
+        
       </div>
-  );
+    );
+    // ▿ ▹
 };
 
 export { MicrophoneModeEnum, Microphone };

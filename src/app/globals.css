@@ -54,13 +54,15 @@ p.textmessage {
 
 
 .microphone-level-left {
-    left: -60%; 
+    left: -60%;
+    display: none;
 }
 
 
 
 .microphone-level-right {
     right: -60%; 
+    display: none;
 }
 
 /*
