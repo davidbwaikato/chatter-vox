@@ -40,7 +40,6 @@ async function POST_PAPAREO(body) {
     const audioMimeType = "audio/mpeg";
     
     const tmpDir        = path.join("public","tmp");
-    //const pid           = process.pid;
 
     const tmpOptions = {
 	tmpdir: tmpDir,
@@ -61,15 +60,6 @@ async function POST_PAPAREO(body) {
 	    fs.mkdirSync(tmpDir);
 	}
 	
-	// Based on:
-	//    https://platform.openai.com/docs/guides/text-to-speech?lang=node
-	
-	// Voices:
-	//   alloy, echo, fable, onyx, nova, and shimmer
-
-	// Response format:
-	//  mp3, opus, aac, flac, wav, and pcm	
-
 	const audio_url = await postPapaReoSynthesize(text)
 	
 	console.log("PapaReo returned audio_url:");
@@ -176,6 +166,9 @@ const PostLookup = {
 export async function POST(req)
 {    
     const body = await req.json();
+
+    console.log("**** textToSpeech:POST(), body.text = " + body.text)
+    
     const configOptions = body.configOptions;
 
     const post_lookup_fn = PostLookup[configOptions.textToSpeech];

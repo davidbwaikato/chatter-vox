@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { blobToBase64 } from "@/utils/blobToBase64";
+import { blobToBase64 } from "@/utils/blobToBase64"; // **** remove util file ??
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
@@ -17,6 +17,7 @@ export const useRecordVoice = (props) => {
     const [recording, setRecording] = useState(false);
 
     const isRecording = useRef(false);
+    const stream = useRef(null);
     const chunks = useRef([]);
     const audioContext = useRef(null);
     const sourceNode   = useRef(null);
@@ -69,6 +70,84 @@ export const useRecordVoice = (props) => {
 		props.updateStatusCallback("_statusRecording_");
 		
 		isRecording.current = true;
+
+
+
+
+		mediaRecorder.onstart = () => {
+		    console.log("mediaRecorder.onstart()");
+		    audioContext.current = new AudioContext();
+		    sourceNode.current = audioContext.current.createMediaStreamSource(stream.current);
+		    analyzerNode.current = audioContext.current.createAnalyser();
+		    sourceNode.current.connect(analyzerNode.current);
+		    
+		    const tick = () => {
+			
+			if (isRecording.current) {
+			    const peak = getPeakLevel(analyzerNode.current);
+			    const peak_boosted = Math.min(peak * 130,100); // give it a bit of a visual boost!
+			    
+			    const peak_perc = peak_boosted;
+			    const peak_str = peak_perc.toFixed(0).toString();		  
+			    setMicLevel(peak_str + "%");
+			    
+			    const peak_capped_perc = Math.min(peak_boosted,50); 
+			    const peak_capped_str = peak_capped_perc.toFixed(0).toString();		  
+			    setMicLevelCapped(peak_capped_str + "%");
+			    
+			    const peak_cliprect_top = 100 - peak_boosted;
+			    const peak_cliprect_str = `rect(${peak_cliprect_top}% 100% 100% 0%)`;
+			    setMicLevelCliprect(peak_cliprect_str)
+			    
+			    requestAnimationFrame(tick);
+			}
+			else {
+			    sourceNode.current.disconnect();
+			    audioContext.current.close();
+			    setMicLevel("0%");
+			    setMicLevelCapped("0%");
+			    setMicLevelCliprect("rect(95% 100% 100% 0%)");
+			}
+		    };
+		    tick();
+		    
+		    chunks.current = [];
+		};
+		
+		mediaRecorder.ondataavailable = (ev) => {
+		    chunks.current.push(ev.data);
+		};
+		
+		mediaRecorder.onstop = () => {
+		    console.log("mediaRecorder.onstop()");
+		    const audioMimeType = mediaRecorder.mimeType;
+		    console.log("audioMimeType = " + audioMimeType);
+		    setAudioMimeType(audioMimeType);      
+		    
+		    const audioBlob = new Blob(chunks.current, { type: audioMimeType });
+		    console.log("Converting chunks to blob:");
+		    console.log(audioBlob);
+		    blobToBase64(audioBlob, getText);
+
+		    // ****
+		    /*
+		    const processAudioBlob = async () => {
+			const audioBlobBase64 = await blobToBase64Promise(audioBlob);
+			await getText(audioBlob,audioBlobBase64,audioMimeType);
+			
+		    };
+		    processAudioBlob();
+		    */
+		    
+		    /*
+		    blobToBase64Promise(audioBlob).then(audioBlobBase64 => {
+			getText(audioBlob,audioBlobBase64,audioMimeType);
+		    })
+		    */
+	      
+		};
+		
+		
 		// Controlling the timeslice to .start() to be 1000, based on OpenAI Whisper <=> Safari issue
 		//   https://community.openai.com/t/whisper-problem-with-audio-mp4-blobs-from-safari/322252
 		mediaRecorder.start(1000);
@@ -244,7 +323,7 @@ export const useRecordVoice = (props) => {
     };
     
     
-    const getText = async (blob, base64data, mimeType) => {		    
+    const getText = async (blob, base64data, mimeType) => {
 	props.updateStatusCallback("_statusSpeechToTextProcessing_");
 	
 	try {
@@ -290,17 +369,57 @@ export const useRecordVoice = (props) => {
       }
   };
 
+/*
+  const blobToBase64Async = (blob, callback) => {
+      const reader = new FileReader();
+      reader.onload = function () {
+	  const type = blob.type;
+	  const base64data = reader?.result?.split(",")[1];
+	  callback(blob,base64data,type);
+      };
+      reader.readAsDataURL(blob);
+  };
+*/
+
+    // https://stackoverflow.com/questions/18650168/convert-blob-to-base64
+    /*
+  function blobToBase64(blob) {
+	return new Promise((resolve, _) => {
+	    const reader = new FileReader();
+	    reader.onloadend = () => resolve(reader.result);
+	    reader.readAsDataURL(blob);
+	});
+    }
+    */
+
+  const blobToBase64Promise = blob => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      return new Promise(resolve => {
+	  reader.onloadend = () => {
+	      resolve(reader.result);
+	  };
+      });
+  };
     
-  const initializeMediaRecorder = (stream) => {
+    
+  const initializeMediaRecorder = (initStream) => {
 
       if (mediaRecorder === null) {
+	  // This does get called twice, on page load
+	  // The second stream is the one that ultimately gets stored in stream.current
+	  // and subsequently used in startRecording()
+	  
 	  const audioMimeType = getOpenAISupportedMimeType();
 	  
-	  const thisMediaRecorder = new MediaRecorder(stream, { mimeType: audioMimeType });
-	  	  
+	  const thisMediaRecorder = new MediaRecorder(initStream, { mimeType: audioMimeType });
+
+	  stream.current = initStream;
+
+	  
 	  //const sampleRate = stream.getAudioTracks()[0].getSettings().sampleRate;
 	  //console.log("Creating mediaRecorder() from stream with sampleRate = " + sampleRate);
-
+/*
 	  thisMediaRecorder.onstart = () => {
 	      console.log("mediaRecorder.onstart()");
 	      audioContext.current = new AudioContext();
@@ -354,9 +473,27 @@ export const useRecordVoice = (props) => {
 	      const audioBlob = new Blob(chunks.current, { type: audioMimeType });
 	      console.log("Converting chunks to blob:");
 	      console.log(audioBlob);
-	      blobToBase64(audioBlob, getText);
-	  };
+	      //blobToBase64(audioBlob, getText);
 
+
+
+	      const processAudioBlob = async () => {
+		  const audioBlobBase64 = await blobToBase64Promise(audioBlob);
+		  console.log("**** #### useRecordVoice.js, thisMediaRecorder.onstop():  props.lang = " + props.lang);
+		  await getText(audioBlob,audioBlobBase64,audioMimeType);
+
+	      };
+	      processAudioBlob();
+
+	      //
+	      //blobToBase64Promise(audioBlob).then(audioBlobBase64 => {
+	      //	  await getText(audioBlob,audioBlobBase64,audioMimeType);
+	      //})
+	      //
+	      
+	  };
+*/
+	  
 	  setMediaRecorder(thisMediaRecorder);      
 	  
       }

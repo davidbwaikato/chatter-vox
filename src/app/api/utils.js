@@ -26,17 +26,19 @@ function doRequest(options, data) {
       let responseBody = '';
 
       res.on('data', (chunk) => {
+	console.log("**** Adding chunk: " + chunk);
         responseBody += chunk;
       });
 
-	res.on('end', () => {
+      res.on('end', () => {
 	console.log("**** responseBody = " + responseBody);
         resolve(JSON.parse(responseBody));
       });
     });
 
     req.on('error', (err) => {
-      reject(err);
+	console.error(err);
+	reject(err);
     });
 
     req.write(data)

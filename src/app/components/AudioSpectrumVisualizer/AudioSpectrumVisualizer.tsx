@@ -200,9 +200,29 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
         //
         // For an alternative way for creating a an audiobuffer from a blob see:
         //   https://stackoverflow.com/questions/40363335/how-to-create-an-audiobuffer-from-a-blob
-          
+
+
+	// Audio returned to Te Hihu not playing correctly ... truncates
+	// Issue with how the MP3 is perhaps formed?
+	
+	// https://stackoverflow.com/questions/57237660/cannot-get-audio-blob-recorded-in-chrome-to-work-in-safari
+
+	  /*
+	const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      	    const fileReader = new FileReader();
+	    fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
+	    fileReader.onerror = reject;
+	    fileReader.readAsArrayBuffer(audioBlob);
+	});
+	  */
+	  
 	const arrayBuffer = await audioBlob.arrayBuffer();
+	console.log("**** !!!! arrayBuffer = " + JSON.stringify(arrayBuffer));
+	console.log(arrayBuffer)
 	const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+	console.log("**** !!!! audioBuffer = " + JSON.stringify(arrayBuffer));
+	console.log(audioBuffer)
+	
 
         // For details on duration, and current progress while playing:
         //   https://stackoverflow.com/questions/31644060/how-can-i-get-an-audiobuffersourcenodes-current-time

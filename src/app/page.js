@@ -13,7 +13,7 @@ import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpec
 const InterfaceText = {
 
     _howCanIHelp_: {
-	"en": "How can I help you today?",
+	"en": "How can I help?",
 	"mi": "Kōrero mai ..."
     },
     _microphoneInstructions_: {
@@ -106,21 +106,23 @@ const InterfaceText = {
     
     
     _LLMSays_: {
-	"en": "Claude says",
-	"mi": "ki tā Claude"
+	"en": "ChatGPT says",
+	"mi": "ki tā ChatGPT"
+	//"en": "Claude says",
+	//"mi": "ki tā Claude"
     }
 };
 
-const DefaultLang = "mi";
-//const DefaultLang = "en";
+//const DefaultLang = "mi";
+const DefaultLang = "en";
 
 
 const DefaultConfigOptions = {
-    //speechToText : "OpenAI",
-    //chatLLM      : "OpenAI",
+    speechToText : "OpenAI",
+    chatLLM      : "OpenAI",
     //textToSpeech : "OpenAI",
-    speechToText : "PapaReo",
-    chatLLM      : "Claude",
+    //speechToText : "PapaReo",
+    //chatLLM      : "Claude",
     textToSpeech : "PapaReo",
 
     lang: DefaultLang,
@@ -202,6 +204,7 @@ export default function Home()
 	//setConfigOptions(NewConfigOptions);
 
 	configOptionsRef.current.lang = Lang;
+	updateStatus(defaultStatusText);
 	
     }, [Lang]);
     
@@ -213,6 +216,8 @@ export default function Home()
 	    mediaPlayer.current.state = "playing";
 
             // Take a copy of the blob so the audio player can start/stop playing it
+	    console.log("**** !!!! setting apBlob to copy of 'blob'")
+	    console.log(blob)
             setAudioPlayerBlob(blob);
 	}
 	else {
@@ -282,6 +287,7 @@ export default function Home()
             
 	    console.log("Initializing a new AudioContext");
 	    setAudioContext(new AudioContext());
+	    console.log("**** page::handleAudioPlay(), away to setBlob()")	    
             setBlob(apBlob);
         }
     };
@@ -310,6 +316,7 @@ export default function Home()
             console.log("Initializing AudioContext");
             setAudioContext(new AudioContext());
         }
+	console.log("**** page::playAudioBlobCallbackDEPRECATED!!!(), away to setBlob()")
 	setBlob(callbackBlob);
     };
 
@@ -325,6 +332,7 @@ export default function Home()
             console.log("Initializing AudioContext");
             setAudioContext(new AudioContext());
         }
+	console.log("**** page::playAudioBlobCallback(), away to setBlob()")	
 	setBlob(callbackBlob);
 
     };
@@ -387,6 +395,7 @@ export default function Home()
 	            </div>
 	          </div>
 	          <Microphone
+	            lang={Lang}
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 		    updateStatusCallback={updateStatus}
