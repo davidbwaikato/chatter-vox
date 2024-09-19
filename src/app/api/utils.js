@@ -26,12 +26,12 @@ function doRequest(options, data) {
       let responseBody = '';
 
       res.on('data', (chunk) => {
-	console.log("**** Adding chunk: " + chunk);
+	//console.log("**** Adding chunk: " + chunk);
         responseBody += chunk;
       });
 
       res.on('end', () => {
-	console.log("**** responseBody = " + responseBody);
+	//console.log("**** responseBody = " + responseBody);
         resolve(JSON.parse(responseBody));
       });
     });

@@ -167,7 +167,7 @@ export async function POST(req)
 {    
     const body = await req.json();
 
-    console.log("**** textToSpeech:POST(), body.text = " + body.text)
+    //console.log("**** textToSpeech:POST(), body.text = " + body.text)
     
     const configOptions = body.configOptions;
 

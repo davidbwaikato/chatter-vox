@@ -1,8 +1,6 @@
 
 //callback - where we want to get result
-const blobToBase64 = (blob, callback) => {
-    console.log("**** blobToBase64(blob,callback)")
-    console.log(blob)
+const blobToBase64 = (blob, callback) => {    console.log(blob)
     
     const reader = new FileReader();
     reader.onload = function () {

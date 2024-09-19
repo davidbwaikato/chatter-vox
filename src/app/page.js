@@ -120,10 +120,10 @@ const DefaultLang = "en";
 const DefaultConfigOptions = {
     speechToText : "OpenAI",
     chatLLM      : "OpenAI",
-    //textToSpeech : "OpenAI",
+    textToSpeech : "OpenAI",
     //speechToText : "PapaReo",
     //chatLLM      : "Claude",
-    textToSpeech : "PapaReo",
+    //textToSpeech : "PapaReo",
 
     lang: DefaultLang,
     interfaceText: InterfaceText
@@ -216,7 +216,6 @@ export default function Home()
 	    mediaPlayer.current.state = "playing";
 
             // Take a copy of the blob so the audio player can start/stop playing it
-	    console.log("**** !!!! setting apBlob to copy of 'blob'")
 	    console.log(blob)
             setAudioPlayerBlob(blob);
 	}
@@ -287,7 +286,6 @@ export default function Home()
             
 	    console.log("Initializing a new AudioContext");
 	    setAudioContext(new AudioContext());
-	    console.log("**** page::handleAudioPlay(), away to setBlob()")	    
             setBlob(apBlob);
         }
     };
@@ -316,7 +314,6 @@ export default function Home()
             console.log("Initializing AudioContext");
             setAudioContext(new AudioContext());
         }
-	console.log("**** page::playAudioBlobCallbackDEPRECATED!!!(), away to setBlob()")
 	setBlob(callbackBlob);
     };
 
@@ -332,7 +329,6 @@ export default function Home()
             console.log("Initializing AudioContext");
             setAudioContext(new AudioContext());
         }
-	console.log("**** page::playAudioBlobCallback(), away to setBlob()")	
 	setBlob(callbackBlob);
 
     };
