@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
 
-const MicrophoneModeEnum = Object.freeze({"inactive":1, "recording":2});
+const MicrophoneModeEnum = Object.freeze({"inactive":1, "recording":2, "disabled":3 });
 
-const Microphone = (props) => {    
+const Microphone = forwardRef((props,ref) => {    
     const { recording, startRecording, stopRecording, micLevel, micLevelCapped, micLevelCliprect, text, statusText } = useRecordVoice(props);
 
     const [microphoneMode, setMicrophoneMode] = useState(MicrophoneModeEnum.inactive);
@@ -16,9 +16,17 @@ const Microphone = (props) => {
     const [isHover,     setIsHover]     = useState(false);
 
     const [showText,    setShowText]    = useState(false);
-    
+
+    useImperativeHandle(ref, () => ({
+	updateMicrophoneMode(newState) {
+	    setMicrophoneMode(newState);
+	},
+    }));
+			
     const handleMouseEnter = () => {
-        setIsHover(true);
+	if (microphoneMode != MicrophoneModeEnum.disabled) {	
+            setIsHover(true);
+	}
     };
  
     const handleMouseLeave = () => {
@@ -26,15 +34,19 @@ const Microphone = (props) => {
     };
 
     const handleMouseDown = () => {
-        setIsMouseDown(true);
-        setMicrophoneMode(MicrophoneModeEnum.recording);
-	startRecording();
+	if (microphoneMode != MicrophoneModeEnum.disabled) {	
+            setIsMouseDown(true);
+            setMicrophoneMode(MicrophoneModeEnum.recording);
+	    startRecording();
+	}
     };
  
     const handleMouseUp = () => {
-        setIsMouseDown(false);
-        setMicrophoneMode(MicrophoneModeEnum.inactive);
-	stopRecording();
+	if (microphoneMode != MicrophoneModeEnum.disabled) {	
+            setIsMouseDown(false);
+            setMicrophoneMode(MicrophoneModeEnum.inactive);
+	    stopRecording();
+	}
     };
 
     
@@ -43,7 +55,10 @@ const Microphone = (props) => {
     // hsl(200, 80%, 46%)
     
     const micBackgroundColor = () => {
-	if (isMouseDown) {
+	if (microphoneMode == MicrophoneModeEnum.disabled) {
+	    return 'rgb(200,200,200)'; // grey for disabled
+	}	
+	else if (isMouseDown) {
 	    return 'rgb(230,10,10)'; // red for record!
 	}
 	else {
@@ -181,7 +196,8 @@ const Microphone = (props) => {
         
       </div>
     );
-    // ▿ ▹
-};
+    // Some alternative (smaller) potentially useful UTF glyphs for use above
+    //   ▿ ▹
+});
 
 export { MicrophoneModeEnum, Microphone };

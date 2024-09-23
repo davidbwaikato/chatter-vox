@@ -9,7 +9,10 @@ import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
-      
+
+const defaultChatLLM  = "OpenAI";
+//const defaultChatLLM  = "Claude";
+
 const InterfaceText = {
 
     _howCanIHelp_: {
@@ -56,11 +59,11 @@ const InterfaceText = {
     },
     
     _statusChatLLMProcessing_: {
-	"en": "Recognised text being processed by Claude ...",
-	"mi": "E hanga whakaaro ana a Claude ...",
+	"en": `Recognised text being processed by ${defaultChatLLM} ...`,
+	"mi": `E hanga whakaaro ana a ${defaultChatLLM} ...`,
     },
     _statusTextToSpeechProcessing_: {
-	"en": "Claude's response being synthesized as audio ...",
+	"en": `${defaultChatLLM}'s response being synthesized as audio ...`,
 	"mi": "E whakarite ana te kupu tuhi ki te kupu kōrero ..."
     },
     _statusPlayingSynthesizedResult_: {
@@ -69,12 +72,12 @@ const InterfaceText = {
     },
 
     _statusChatLLMResponseReceived_: {
-	"en": "Claude's response received",
-	"mi": "Kua whakahoki kōrero mai a Claude"
+	"en": `${defaultChatLLM}'s response received`,
+	"mi": `Kua whakahoki kōrero mai a ${defaultChatLLM}`
     },
     _statusChatLLMNoResponseReceived_: {
-	"en": "No response received from Claude",
-	"mi": "Kāore a Claude i whakahoki kōrero mai"
+	"en": `No response received from ${defaultChatLLM}`,
+	"mi": `Kāore a ${defaultChatLLM} i whakahoki kōrero mai`
     },
 
     _statusNetworkError_: {
@@ -83,7 +86,7 @@ const InterfaceText = {
     },
     _textInfoNetworkError_: {
 	"en": "A network error occured when trying to process the recognised text",
-	"mi": "Kua whati te tūhononga rorohiko i a Claude e whakaaro ana"
+	"mi": `Kua whati te tūhononga rorohiko i a ${defaultChatLLM} e whakaaro ana`
     },
 
         
@@ -106,10 +109,8 @@ const InterfaceText = {
     
     
     _LLMSays_: {
-	"en": "ChatGPT says",
-	"mi": "ki tā ChatGPT"
-	//"en": "Claude says",
-	//"mi": "ki tā Claude"
+	"en": `${defaultChatLLM} says`,
+	"mi": `ki tā ${defaultChatLLM}`
     }
 };
 
@@ -119,10 +120,9 @@ const DefaultLang = "en";
 
 const DefaultConfigOptions = {
     speechToText : "OpenAI",
-    chatLLM      : "OpenAI",
+    chatLLM      : `${defaultChatLLM}`,
     textToSpeech : "OpenAI",
     //speechToText : "PapaReo",
-    //chatLLM      : "Claude",
     //textToSpeech : "PapaReo",
 
     lang: DefaultLang,
@@ -130,7 +130,7 @@ const DefaultConfigOptions = {
 };
 
 
-const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "playing":3, "paused":4 });
+const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "processing":3, "playing":4, "paused":5 });
 
 export default function Home()
 {
@@ -156,6 +156,8 @@ export default function Home()
         { role: "assistant", content: "How can I you today?" }
     ]);
 
+    let microphoneImperativeRef = null;
+    
     const configOptionsRef = useRef(DefaultConfigOptions); // Currently, a generic object/hashmap
     const messagesRef      = useRef(null);    
     const mediaPlayer      = useRef(null); // <MediaPlayer>
@@ -229,18 +231,24 @@ export default function Home()
     useEffect(() => {
         if (interfaceMode === InterfaceModeEnum.inactive) {
             setMicrophoneMode(MicrophoneModeEnum.inactive);
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }
         else if (interfaceMode === InterfaceModeEnum.recording) {
             setMicrophoneMode(MicrophoneModeEnum.recording);
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }            
+        else if (interfaceMode === InterfaceModeEnum.processing) {
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);	    
+        }            
         else if (interfaceMode === InterfaceModeEnum.playing) {
-            setMicrophoneMode(MicrophoneModeEnum.inactive);            
+            setMicrophoneMode(MicrophoneModeEnum.disabled);
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
             setAudioPlayerMode(AudioPlayerModeEnum.playing);
         }
         else if (interfaceMode === InterfaceModeEnum.paused) {
-            setMicrophoneMode(MicrophoneModeEnum.inactive);            
+            setMicrophoneMode(MicrophoneModeEnum.disabled);
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);	    
             setAudioPlayerMode(AudioPlayerModeEnum.paused);
         }        
     }, [interfaceMode]);
@@ -251,10 +259,17 @@ export default function Home()
     }, [messages]);
     
     const updateStatus = (text_marker) => {
-	console.log("*** updateStatus(), Lang = " + Lang + ", text_marker = " + text_marker);
+	console.log("*** updateStatus(), Lang = " + Lang + ", text_marker = " + text_marker);	
 	let lang_text = text_marker;
 	
 	if (text_marker in configOptionsRef.current.interfaceText) {
+
+	    if (text_marker.endsWith("Processing_")) {
+		setInterfaceMode(InterfaceModeEnum.processing);
+	    }
+	    else if (text_marker.match(/(Completed_|Recieved_|Result_)$/)) {
+		setInterfaceMode(InterfaceModeEnum.inactive);		
+	    }
 	    
 	    lang_text = configOptionsRef.current.interfaceText[text_marker][Lang];
 	}
@@ -392,6 +407,7 @@ export default function Home()
 	          </div>
 	          <Microphone
 	            lang={Lang}
+		    ref={(ref) => (microphoneImperativeRef = ref)}  
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 		    updateStatusCallback={updateStatus}
