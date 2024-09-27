@@ -1,0 +1,13 @@
+
+
+echo "----"
+source ./ACTIVATE-NODEJS.bash
+
+export CHATTERVOX_PORT=5000
+echo "CHATTERVOX_PORT: $CHATTERVOX_PORT"
+
+export CHATTERVOX_PM2_NAME="chatter-vox"
+echo "CHATTERVOX_PM2_NAME: $CHATTERVOX_PM2_NAME"
+echo "----"
+
+
