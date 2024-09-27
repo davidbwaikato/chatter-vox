@@ -504,7 +504,7 @@ export const useRecordVoice = (props) => {
   useEffect(() => {
       if (typeof window !== "undefined") {
 
-	  if (navigator.mediaDevices !== undefined) {
+	  if (typeof navigator.mediaDevices !== "undefined") {
 	  
 	      navigator.mediaDevices
 		  .getUserMedia({ audio: true })
@@ -517,7 +517,8 @@ export const useRecordVoice = (props) => {
 	      else {
 		  alert("Unable to access mediaDevices");
 	      }
-	      
+	      // **** 
+	      props.updateStatusCallback("_statusUnableToRecord_");
 	  }
       }
   }, []);

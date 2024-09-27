@@ -29,6 +29,14 @@ in your web browser:
     http://localhost:3000
 ````
 
+If operating over HTTPS, then to add this domain into those already being
+served of https via an Apache2 web server:
+
+````
+sudo certbot --expand --apache -d chattervox.example.org
+````
+
+
 Inspiration for the audio component taken from:
 
   https://github.com/ZaharBerku/openai-speech-to-text

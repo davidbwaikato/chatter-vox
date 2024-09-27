@@ -35,11 +35,15 @@ const InterfaceText = {
     
     _statusLabel_: {
 	"en": "Status",
-	"mi": "Tūnga" // Translated via Google, then checked against some te reo dictionary resources
+	"mi": "Tūnga" // **** Translated via Google, then checked against some te reo dictionary resources
     },
     _statusWaiting_: {
 	"en": "Waiting for audio input ...",
 	"mi": "E whanga ana ki tō reo ..."
+    },
+    _statusUnableToRecord_: {
+	"en": "Unable to record",
+	"mi": "Kaore e taea te tuhi" // **** Translated via Google
     },
     _statusRecording_: {
 	"en": "Recording ...",
