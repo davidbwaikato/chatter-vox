@@ -503,9 +503,22 @@ export const useRecordVoice = (props) => {
     
   useEffect(() => {
       if (typeof window !== "undefined") {
-	  navigator.mediaDevices
-              .getUserMedia({ audio: true })
-              .then(initializeMediaRecorder);
+
+	  if (navigator.mediaDevices !== undefined) {
+	  
+	      navigator.mediaDevices
+		  .getUserMedia({ audio: true })
+		  .then(initializeMediaRecorder);
+	  }
+	  else {
+	      if (!window.isSecureContext) {
+		  alert("Browser Window is not in a secure context (e.g. https, or localhost)\nUnable to access microphone for recording audio");
+	      }
+	      else {
+		  alert("Unable to access mediaDevices");
+	      }
+	      
+	  }
       }
   }, []);
     
