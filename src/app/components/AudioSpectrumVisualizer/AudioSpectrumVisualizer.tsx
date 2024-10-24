@@ -4,10 +4,11 @@ import {
   useEffect,
   useRef,
   useState,
+  forwardRef,
+  useImperativeHandle
 } from "react";
 
-import { calculateBarData, draw } from "../LiveAudioVisualizer/utils";
-
+import { calculateBarData, draw, drawGrid } from "../LiveAudioVisualizer/utils";
 
 // Inspired by MediaRecorder, MediaPlayer is a class that
 // is used to to keep state of what is happening in terms
@@ -110,11 +111,15 @@ export interface Props {
   updateStatusCallback?: any;
 }
 
-const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
+// https://medium.com/@mattdeveloper/mastering-forwardref-in-react-with-typescript-c44857e7ff2fhttps://medium.com/@mattdeveloper/mastering-forwardref-in-react-with-typescript-c44857e7ff2f
+//const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
+
+const AudioSpectrumVisualizer = forwardRef<ReactElement, Props>(
+	({	    
   mediaPlayer,
   blob,
   audioContext,  
-   
+
   width = "100%",
   height = "100%",
   barWidth = 2,
@@ -126,7 +131,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
   minDecibels = -90,
   smoothingTimeConstant = 0.4,
   updateStatusCallback = null,  
-}: Props) => {
+}: Props, ref) => {
   const [analyser   , setAnalyser   ] = useState<AnalyserNode>();
   const [audioSource, setAudioSource] = useState<SourceNode>();
 
@@ -139,6 +144,13 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
   //const playingRef = useRef<bool>(false);
 
+    useImperativeHandle(ref, () => ({
+	updateVisualizerModeUNUSED(newState) {
+	    console.log("**** !!!! updateVisualizerMode setting mediaPlayer.current.state = " + newState);
+	    mediaPlayer.current.state = "processing";
+	},
+    }));
+    
   const updateProgress = () => {
       const new_progress = startTime - audioContext.currentTime;
       setProgress(new_progress);
@@ -154,7 +166,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     
   useEffect(() => {
       //console.log(`useEffect() [blob], blob defined = ${blob ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);      
-      //console.log(blob);
+      console.log("**** AudioSpectrumVisualizer.useEffect([blob])", blob);
       
       if (!blob) {
           console.log(`**** mediaPlayer.current = ${mediaPlayer.current}`);
@@ -264,26 +276,44 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
 
   useEffect(() => {
       //console.log(`useEffect() [analyser, mediaPlayer.state]: analyser defined = ${analyser ? 1 : 0}, mediaPlayer.state = ${mediaPlayer.current ? mediaPlayer.current.state : null}`);
+
+      // Keep a special eye out for being in the busy processing state
+      if (mediaPlayer.current && mediaPlayer.current.state === "processing") {
+	  console.log("Interface busy processing => calling report()");
+	  report();
+	  return;
+      }
+      
       if (!analyser) {
-          console.log("Displaying default frequency values of zeros");
+          console.log("[mediaPlayer.current.state has changed => Displaying default frequency values of zeros");
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
-              max: 0,
-              min: 0,
+	      max: 0,
+	      min: 0,
           }));
 	  const data = new Uint8Array(dataZeros);	  
-	  processFrequencyData(data);
-
-          return
+	  processFrequencyData(data);	  
+          return;
       }
       
       if (analyser && mediaPlayer.current.state === "playing") {
-          console.log("Calling report()");
+          console.log("mediaPlayer.current.state and changed and is set to 'playing' => Calling report()");
           report();
       }
   }, [analyser, mediaPlayer.current ? mediaPlayer.current.state : null]);
 
-  const report = useCallback(() => {
+  
+  const report = useCallback((timestamp) => {
       //console.log(`**** report() -- analyser = ${analyser ? 1 : 0} audioContext.state = ${audioContext ? audioContext.state : null}`);
+
+      // look out for displaying the 'busy' animated visual as a special case
+      // => doesn't need a audioContext or mediaPlayer to operate
+      if (mediaPlayer.current.state === "processing") {
+          processBusyData(timestamp);
+          //console.log("  processing, requestAnimationFrame");
+          requestAnimationFrame(report);
+	  return;
+      }
+      
       if (!analyser) {
           return;
       }
@@ -292,10 +322,11 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
           return;
       }
       
-    const data = new Uint8Array(analyser?.frequencyBinCount);
     
       //console.log(`      -- checking mediaPlayer.state = ${mediaPlayer.current.state}`);
-    if (mediaPlayer.current.state === "playing") {
+      if (mediaPlayer.current.state === "playing") {
+	const data = new Uint8Array(analyser?.frequencyBinCount);
+	  
         if (audioContext.state === "suspended") {
             // AudioContext coming out of pause-state
             // => Need to recalculate the startTime, to take account of pause,            
@@ -344,6 +375,7 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
       barWidth,
       gap
     );
+    
     draw(
       dataPoints,
       canvasRef.current,
@@ -354,6 +386,21 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
     );
   };
 
+    const processBusyData = (timestamp: number): void => {
+	//console.log("*** processBusyData()");
+	if (!canvasRef.current) return;
+	
+	drawGrid(
+	    timestamp,
+	    canvasRef.current,
+	    barWidth,
+	    gap,
+	    backgroundColor,
+	    barColor
+	);
+	  
+    };
+ 
     
   return (
       <canvas
@@ -366,6 +413,6 @@ const AudioSpectrumVisualizer: (props: Props) => ReactElement = ({
         }}
       />
   );
-};
+});
 
 export { MediaPlayer, AudioSpectrumVisualizer };

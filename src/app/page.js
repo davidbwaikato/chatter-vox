@@ -161,12 +161,13 @@ export default function Home()
     ]);
 
     let microphoneImperativeRef = null;
+    let visualizerImperativeRefUNUSED = null;
     
     const configOptionsRef = useRef(DefaultConfigOptions); // Currently, a generic object/hashmap
     const messagesRef      = useRef(null);    
     const mediaPlayer      = useRef(null); // <MediaPlayer>
     
-    const mediaPlayerWidth     = 400;
+    const mediaPlayerWidth     = window.innerWidth > 600 ? 400 : 280;
     const mediaPlayerHeight    = 132;
     const audioControllerWidth = 46;
 
@@ -232,7 +233,9 @@ export default function Home()
 	}
     }, [blob]);
 
+    
     useEffect(() => {
+	//console.log("**** **** **** InterfaceMode state has changed: ", interfaceMode);
         if (interfaceMode === InterfaceModeEnum.inactive) {
             setMicrophoneMode(MicrophoneModeEnum.inactive);
 	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
@@ -243,7 +246,10 @@ export default function Home()
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }            
         else if (interfaceMode === InterfaceModeEnum.processing) {
-	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);	    
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
+	    //console.log("**** **** **** InterfaceModeEnum === processing, => setting mediaPlayer state to processing");
+	    mediaPlayer.current.state = "processing";
+	    
         }            
         else if (interfaceMode === InterfaceModeEnum.playing) {
             setMicrophoneMode(MicrophoneModeEnum.disabled);
@@ -362,6 +368,7 @@ export default function Home()
     }
 ;
     const lang_HowCanIHelp = configOptionsRef.current.interfaceText["_howCanIHelp_"][Lang];
+
     
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
@@ -388,7 +395,8 @@ export default function Home()
 	            <div className="border border-solid"
 	                 style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px',
                                  backgroundColor: 'white', borderColorXX: 'black', float: 'right'}}>
-		      <AudioSpectrumVisualizer
+	              <AudioSpectrumVisualizer
+	                ref={(ref) => (visualizerImperativeRefUNUSED = ref)}  
 		        mediaPlayer={mediaPlayer}
 	                blob={blob}
 	                audioContext={audioContext}
@@ -422,6 +430,7 @@ export default function Home()
 	      </div>
 	    </main>
   );
+
 }
 
 

@@ -5,6 +5,8 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'rea
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
 
+import Markdown from 'react-markdown';
+
 const MicrophoneModeEnum = Object.freeze({"inactive":1, "recording":2, "disabled":3 });
 
 const Microphone = forwardRef((props,ref) => {    
@@ -110,9 +112,6 @@ const Microphone = forwardRef((props,ref) => {
     
     const showTextBlockStyle = {
         //minWidth: '446px',
-        minWidth: '876px',
-        backgroundColor: '#F4F4F4',
-        padding: '0.5rem 0.5rem 0.5rem 0.5rem',
         display: showTextBlockCheck()
     };
 
@@ -188,9 +187,11 @@ const Microphone = forwardRef((props,ref) => {
                 <div style={{verticalAlign: 'text-top'}}>{showText ? "▽ " + it_hidetext[lang_] : "▷ "+ it_showtext[lang_]}</div>
               </button>
             </div>
-	    <p id="mic-text-message" className="textmessage" style={showTextMessageStyle}>
-              {text}
-            </p>
+	    <div id="mic-markdown-message" className="textmessage" style={showTextMessageStyle}>	    
+	      <Markdown>
+		{text}
+	      </Markdown>
+	    </div>
           </div>
         </div>
         

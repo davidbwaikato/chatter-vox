@@ -94,7 +94,7 @@ async function POST_OPENAI(body) {
     try {
 	const completion = await openai.chat.completions.create({
 	    //model: "gpt-4-turbo-preview",	    
-	    model: "gpt-4",
+	    model: "gpt-4o",
 	    messages: updatedMessages,
 	    temperature: 0,
 	});
