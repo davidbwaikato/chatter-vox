@@ -39,7 +39,7 @@ const Microphone = forwardRef((props,ref) => {
 	if (microphoneMode != MicrophoneModeEnum.disabled) {	
             setIsMouseDown(true);
             setMicrophoneMode(MicrophoneModeEnum.recording);
-	    startRecording();
+	    startRecording(props.abortControllerRef.current);
 	}
     };
  

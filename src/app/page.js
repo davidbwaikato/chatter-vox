@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useRef  } from 'react';
 
-import { useRecordVoice } from "@/hooks/useRecordVoice";
+//import { useRecordVoice } from "@/hooks/useRecordVoice";
 
 import { MicrophoneModeEnum,  Microphone  } from "@/app/components/Microphone";
 import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
+import AbortController from "abort-controller";
 
 const defaultChatLLM  = "OpenAI";
 //const defaultChatLLM  = "Claude";
@@ -92,7 +93,6 @@ const InterfaceText = {
 	"en": "A network error occured when trying to process the recognised text",
 	"mi": `Kua whati te tūhononga rorohiko i a ${defaultChatLLM} e whakaaro ana`
     },
-
         
     _statusAudioPlayerPaused_: {
 	"en": "Paused",
@@ -157,24 +157,43 @@ export default function Home()
 
     const [messages, setMessages] = useState([
         { role: "system",    content: "You are a helpful assistant" },
-        { role: "assistant", content: "How can I you today?" }
+        { role: "assistant", content: "How can I help you today?" }
     ]);
 
+    const [mediaPlayerWidth,     setMediaPlayerWidth    ] = useState(400);
+    const [mediaPlayerHeight,    setMediaPlayerHeight   ] = useState(132);
+    const [audioControllerWidth, setAudioControllerWidth] = useState( 46);
+    const [interfaceWidth,       setInterfaceWidth      ] = useState(mediaPlayerWidth+audioControllerWidth);
+    
     let microphoneImperativeRef = null;
     let visualizerImperativeRefUNUSED = null;
     
     const configOptionsRef = useRef(DefaultConfigOptions); // Currently, a generic object/hashmap
     const messagesRef      = useRef(null);    
     const mediaPlayer      = useRef(null); // <MediaPlayer>
-    
-    const mediaPlayerWidth     = window.innerWidth > 600 ? 400 : 280;
-    const mediaPlayerHeight    = 132;
-    const audioControllerWidth = 46;
 
-    const interfaceWidth = mediaPlayerWidth + audioControllerWidth;
+    const abortControllerRef = useRef(null);
+    
+    //const mediaPlayerWidth     = window.innerWidth < 600 ? 280 : 400;
+    // https://dev.to/vvo/how-to-solve-window-is-not-defined-errors-in-react-and-next-js-5f97
+    //const mediaPlayerWidth     = ((typeof window !== "undefined") && (window.innerWidth < 600)) ? 280 : 400;
+    //const mediaPlayerHeight    = 132;
+    //const audioControllerWidth = 46;
+
+    //const interfaceWidth = mediaPlayerWidth + audioControllerWidth;
     
     
     useEffect(() => {
+	console.log("**** page.js useEffect([]) Init app");
+	
+	if (typeof window !== 'undefined') {
+	    if (window.innerWidth < 600) {
+		const width = 280;
+		setMediaPlayerWidth(width);
+		setInterfaceWidth(width+audioControllerWidth);
+	    }
+        } 
+	
 	if (mediaPlayer.current === null) {
 	    
 	    mediaPlayer.current = new MediaPlayer(function() {
@@ -185,6 +204,11 @@ export default function Home()
 	    });
 
 	}
+
+	if (abortControllerRef.current == null) {
+	    abortControllerRef.current = new AbortController();
+	}
+	
     }, []);
 
 
@@ -323,6 +347,13 @@ export default function Home()
             
 	    setBlob(null);
         }
+	else if (mediaPlayer.current.state === "processing") {
+	    abortControllerRef.current.abort("User interrupted processing");
+            mediaPlayer.current.state = "inactive";
+            setInterfaceMode(InterfaceModeEnum.inactive);	        
+	    updateStatus("_statusWaiting_");
+	    
+	}
     };
 
    
@@ -422,6 +453,7 @@ export default function Home()
 		    ref={(ref) => (microphoneImperativeRef = ref)}  
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
+	            abortControllerRef={abortControllerRef}
 		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}
                     updateMessagesCallback={updateMessagesCallback}

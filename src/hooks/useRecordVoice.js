@@ -57,7 +57,7 @@ export const useRecordVoice = (props) => {
 	return return_format;
     }
     
-    const startRecording = () => {
+    const startRecording = (abortController) => {
 	if (mediaRecorder) {
 	    if (isRecording.current) {
 		// Can end up in this situtation if the user has dragged the cursor out of the microphone area
@@ -127,7 +127,7 @@ export const useRecordVoice = (props) => {
 		    const audioBlob = new Blob(chunks.current, { type: audioMimeType });
 		    console.log("Converting chunks to blob:");
 		    console.log(audioBlob);
-		    blobToBase64(audioBlob, getText);
+		    blobToBase64(audioBlob,abortController, getText);
 
 		    // ****
 		    /*
@@ -227,8 +227,9 @@ export const useRecordVoice = (props) => {
 		    json_str = res.json();
 		}
 		return json_str;
-	    });
-
+	    }).catch(function(err) {
+		console.error(` Err: ${err}`);
+            });
 	    
 	    if (response != null) {
 		// The following could be more streamlined if the server returned the blob
@@ -243,8 +244,13 @@ export const useRecordVoice = (props) => {
 		const synthesizedAudioURL = synthesizedAudioFilename.replace(/public/,"")
 		
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
-		      .then(response => response.blob());
+		      .then(response => response.blob())
+		      .catch(function(err) {
+			  console.error(` Err: ${err}`);
+		      });
 
+		// **** if (synthesizedAudioBlob != null) { ..... update etc }
+		// otherwise display an error message as status
 		props.updateStatusCallback("_statusPlayingSynthesizedResult_");		    
 		props.playAudioBlobCallback(synthesizedAudioBlob);
 
@@ -256,7 +262,7 @@ export const useRecordVoice = (props) => {
     };
 
     
-    const getPromptResponse = async (promptText) => {
+    const getPromptResponse = async (promptText, abortController) => {
 	//props.updateStatusCallback("Recognised text being processed by " + props.configOptionsRef.current.chatLLM);
 	props.updateStatusCallback("_statusChatLLMProcessing_");
 		    
@@ -266,6 +272,7 @@ export const useRecordVoice = (props) => {
 	try {
 	    const response = await fetch("/api/chatLLM", {
 		method: "POST",
+		signal: abortController.signal,
 		headers: {
 		    "Content-Type": "application/json",
 		},
@@ -282,8 +289,9 @@ export const useRecordVoice = (props) => {
 		    json_str = res.json();
 		}
 		return json_str;
-	    });
-
+	    }).catch(function(err) {
+		console.error(` Err: ${err}`);
+            });	    
 	    
 	    if (response != null) {
 		// The returned top message from ChatLMM
@@ -323,12 +331,13 @@ export const useRecordVoice = (props) => {
     };
     
     
-    const getText = async (blob, base64data, mimeType) => {
+    const getText = async (blob, base64data, mimeType, abortController) => {
 	props.updateStatusCallback("_statusSpeechToTextProcessing_");
 	
 	try {
 	  const response = await fetch("/api/speechToText", {
               method: "POST",
+	      signal: abortController.signal,
               headers: {
 		  "Content-Type": "application/json",
               },
@@ -343,7 +352,10 @@ export const useRecordVoice = (props) => {
 		  json_str = res.json();
 	      }
 	      return json_str;
-	  });
+	  }).catch(function(err) {
+              console.error(` Err: ${err}`);
+          });
+	    
 
 	  if (response != null) {
 	      const { text } = response.recognizedTextData;
@@ -361,7 +373,7 @@ export const useRecordVoice = (props) => {
 	      //props.playAudioBlobCallback(blob);
 	      
 	      // Now ask ChatLLM to respond to the recognised text
-	      getPromptResponse(text);
+	      getPromptResponse(text,abortController);
 	  }
       }
       catch (error) {
