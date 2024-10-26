@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 
+import { interfaceTextResolver } from "@/utils/interfaceText";
+
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
 
@@ -79,18 +81,8 @@ const Microphone = forwardRef((props,ref) => {
         backgroundColor: micBackgroundColor()
     };
 
-    /*
-    const lang_ = "en";
-    // Language independent text messages
-    const tm_how_to_record_ = {
-	'en': "Press and hold the microphone button to record.",
-	'mi': "Patōhia me te pupuri i te pātene hopuoro hei tuhi"
-    };
-    */
-
-    const lang_  = props.configOptionsRef.current.lang;    
+    const lang_  = props.configOptionsRef.current.lang;
     const it_microphoneInstructions = props.configOptionsRef.current.interfaceText["_microphoneInstructions_"];
-    
     
     //const micLevelStyle = {
     //    visibility: recording ? 'visible' : 'hidden'
@@ -161,7 +153,7 @@ const Microphone = forwardRef((props,ref) => {
 
     const it_showtext = props.configOptionsRef.current.interfaceText["_showtext_"];
     const it_hidetext = props.configOptionsRef.current.interfaceText["_hidetext_"];
-          
+              
     return (
       <div className="flex flex-col justify-center items-center p-3">
         <button className="border-none bg-transparent w-14 rounded-full" style={containerStyle}

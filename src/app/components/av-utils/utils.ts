@@ -84,7 +84,7 @@ const settings = {
     backgroundColor: 'transparent',  // Background color for canvas 
     //boxColor: 'lightblue',           // Color for filled boxes
     boxColor: 'hsl(195, 53%, 80%)',
-    gridlineColor:'lightgrey'        // Color for gridlines
+    gridlineColor:'white'        // Color for gridlines
 };
 
 
@@ -152,9 +152,19 @@ export const drawGrid = (
     boxColor: string
 ): void => {
 
-    if (gridFrames == null) {
+    const boxWidth = barWidth + gap;
+    const boxHeight = boxWidth;
+
+    const gridCols = Math.floor(canvas.width / boxWidth);
+    const gridRows = Math.floor(canvas.height / boxHeight);
+
+    if ((gridFrames == null) || (gridCols != settings.gridCols) || (gridRows != settings.gridRows)) {
 	settings.backgroundColor = backgroundColor;
 	settings.boxColor = boxColor;
+
+	settings.gridCols = gridCols;
+	settings.gridRows = gridRows;
+    
 	gridFrames = generateGridFramesWithSmoothSwirl(settings);
     }
     
@@ -162,8 +172,6 @@ export const drawGrid = (
         // Get the current frame of grid data
         const gridData = gridFrames[currentFrame];
     
-	const amp = canvas.height / 2;
-
 	const ctx = canvas.getContext("2d") as CustomCanvasRenderingContext2D;
 	if (!ctx) return;
 
@@ -175,17 +183,15 @@ export const drawGrid = (
 	}
 
 	// Set up drawing parameters
-	const boxWidth = canvas.width / settings.gridCols;
-	const boxHeight = canvas.height / settings.gridRows;
-
+	
 	// Draw the grid
-	for (let row=0; row<settings.gridRows; row++) {
-            for (let col=0; col<settings.gridCols; col++) {
+	for (let row=0; row<gridRows; row++) {
+            for (let col=0; col<gridCols; col++) {
 		const { fill, color } = gridData[row][col];
 		
 		if (fill) {
                     ctx.fillStyle = color;
-                    ctx.fillRect(col * boxWidth, row * boxHeight, boxWidth - 2, boxHeight - 2);
+                    ctx.fillRect(col * boxWidth, row * boxHeight, boxWidth - gap, boxHeight - gap);
 		} else {
                     ctx.strokeStyle = settings.gridlineColor;
                     ctx.strokeRect(col * boxWidth, row * boxHeight, boxWidth, boxHeight);

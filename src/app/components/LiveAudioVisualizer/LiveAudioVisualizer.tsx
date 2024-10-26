@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { calculateBarData, draw } from "./utils";
+import { calculateBarData, draw } from "../av-utils/utils";
 
 export interface Props {
   /**

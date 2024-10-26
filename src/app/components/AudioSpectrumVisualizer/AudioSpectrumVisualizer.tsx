@@ -8,7 +8,7 @@ import {
   useImperativeHandle
 } from "react";
 
-import { calculateBarData, draw, drawGrid } from "../LiveAudioVisualizer/utils";
+import { calculateBarData, draw, drawGrid } from "../av-utils/utils";
 
 // Inspired by MediaRecorder, MediaPlayer is a class that
 // is used to to keep state of what is happening in terms
@@ -396,7 +396,7 @@ const AudioSpectrumVisualizer = forwardRef<ReactElement, Props>(
 	    barWidth,
 	    gap,
 	    backgroundColor,
-	    barColor
+	    barColor // used for boxColor
 	);
 	  
     };
