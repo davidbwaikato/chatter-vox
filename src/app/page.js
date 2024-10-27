@@ -35,10 +35,11 @@ export default function Home()
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
     const [audioContext, setAudioContext] = useState(null); // <AudioContext>
 
-    const [messages, setMessages] = useState([
-        { role: "system",    content: "You are a helpful assistant" },
-        { role: "assistant", content: "How can I help you today?" }
-    ]);
+    //const [messages, setMessages] = useState([
+    //    { role: "system",    content: "You are a helpful assistant" },
+    //    { role: "assistant", content: "How can I help you today?" }
+    //]);
+    const [messages, setMessages] = useState(null);
 
     const [mediaPlayerWidth,     setMediaPlayerWidth    ] = useState(400);
     const [mediaPlayerHeight,    setMediaPlayerHeight   ] = useState(132);
@@ -345,6 +346,7 @@ export default function Home()
 	setBlob(callbackBlob);
     };
 
+    /*
     const updateMessagesCallback = (returnedMessagePair) => {
         console.log("returnedMessagePair = " + JSON.stringify(returnedMessagePair));
         const userMessage        = returnedMessagePair.userMessage;
@@ -353,7 +355,15 @@ export default function Home()
         const updatedMessages = [...messages, userMessage, returnedTopMessage];
         setMessages(updatedMessages);	        
     };
+*/
+    const updateMessagesCallback = (updatedMessages,returnedMessagePair) => {
+	// For backwards compatability reasons with debugging output
+        console.log("**** returnedMessagePair = " + JSON.stringify(returnedMessagePair));
 
+        setMessages([...updatedMessages]); // **** is the array copy needed here?
+    };
+
+    
     if (isLoading) {
 	//console.log("Returning isLoading message");
 	//return <p>Loading interface configuration settings ...</p>;

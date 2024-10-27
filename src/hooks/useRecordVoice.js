@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 
 import { interfaceTextResolver } from "@/utils/interfaceText";
 
-//import { blobToBase64 } from "@/utils/blobToBase64"; // **** Only used in one place (here) => merge and remove file?
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
@@ -179,7 +178,6 @@ export const useRecordVoice = (props) => {
     };
 
     const getSynthesizedSpeech = async (text) => {
-	//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response being synthesized as audio ...");
 	props.updateStatusCallback("_statusTextToSpeechProcessing_");
 	
 	try {
@@ -234,11 +232,24 @@ export const useRecordVoice = (props) => {
 
     
     const getPromptResponse = async (promptText, abortController) => {
-	//props.updateStatusCallback("Recognised text being processed by " + props.configOptionsRef.current.chatLLM);
 	props.updateStatusCallback("_statusChatLLMProcessing_");
 		    
 	//console.log("**** getPromptResponse");
 	//console.log("     " + props.messagesRef.current);
+	const current_params = props.configOptionsRef.current.params;
+	
+	if ((current_params.speechToText == "PapaReo") || (current_params.textToSpeech == "PapaReo")) {
+	    // Workflow set to use Te Hiku Media APIs => need to ensure chatLLM is set to Claude
+	    console.log("Detected usage of 'PapaReo' API in current config params => Running Te Hiku Media compliance check");
+	    if ((current_params.chatLLM != "Claude") && (current_params.chatLLM != "fake")) {
+		console.warn(`=> Explicitly changing params.chatLLM from '${current_params.chatLLM}' to 'Claude' to be compliant with terms of use`);
+		current_params.chatLLM = "Claude";
+	    }
+	    else {
+		console.log(`=> Operating with bounds: params.chatLLM = '${params.chatLLM}'`);
+	    }
+	}
+
 	
 	try {
 	    const response = await fetch("/api/chatLLM", {
@@ -265,9 +276,17 @@ export const useRecordVoice = (props) => {
             });	    
 	    
 	    if (response != null) {
-		// The returned top message from ChatLMM
-		const result_message_pair = response.result;
-
+		// Updated to return the full list of messages
+		// => Massage back into the "result_pair" form
+		
+		const result_messages = response.result;
+		const result_messages_len = result_messages.length;
+		
+		const result_message_pair = {
+		    userMessage: result_messages[result_messages_len-2],
+		    returnedTopMessage: result_messages[result_messages_len-1]
+		};
+		    		
 		console.log(result_message_pair);
 		const returned_top_message = result_message_pair.returnedTopMessage;
 		const chatResponseText = returned_top_message.content;
@@ -282,23 +301,16 @@ export const useRecordVoice = (props) => {
 		    }
 		}
 		
-		//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response received");
 		props.updateStatusCallback("_statusChatLLMResponseReceived_");
-		props.updateMessagesCallback(result_message_pair);
+		props.updateMessagesCallback(result_messages,result_message_pair); // **** changed from pair to array
 		
-		// //setText(props.configOptionsRef.current.chatLLM + " says: " + chatResponseText); // ****
-		// const lang_llm_says = props.configOptionsRef.current.interfaceText["_LLMSays_"][lang];
 		const lang_llm_says = interfaceTextResolver(props.configOptionsRef.current,"_LLMSays_",lang);
-		setText(lang_llm_says + ":\n" + chatResponseText); // ****
+		setText(lang_llm_says + ":\n" + chatResponseText);
 		
 		getSynthesizedSpeech(chatResponseText);		
 	    }
 	    else {		
-		//setText("No response received from " + props.configOptionsRef.current.chatLLM);
-		//props.updateStatusCallback("No response received from " + props.configOptionsRef.current.chatLLM);
-
 		const lang = props.configOptionsRef.current.lang;
-		//const lang_llm_no_response = props.configOptionsRef.current.interfaceText["_statusChatLLMNoResponseReceived_"][lang];
 		const lang_llm_no_response = interfaceTextResolver(props.configOptionsRef.current,"_statusChatLLMNoResponseReceived_",lang);
 		setText(lang_llm_no_response);
 		props.updateStatusCallback("_statusChatLLMNoResponseReceived_");		
@@ -307,7 +319,6 @@ export const useRecordVoice = (props) => {
 	}
 	catch (error) {
 	    const lang = props.configOptionsRef.current.lang;
-	    //const lang_ti_network_error = props.configOptionsRef.current.interfaceText["_textInfoNetworkError_"][lang];
 	    const lang_ti_network_error = interfaceTextResolver(props.configOptionsRef.current,"_textInfoNetworkError_",lang);
 	    setText(lang_ti_network_error);
 	    props.updateStatusCallback("_statusNetworkError_");
@@ -319,7 +330,7 @@ export const useRecordVoice = (props) => {
     
     const getText = async (blob, base64data, mimeType, abortController) => {
 	props.updateStatusCallback("_statusSpeechToTextProcessing_");
-	
+	    
 	try {
 	  const response = await fetch("/api/speechToText", {
               method: "POST",
@@ -368,6 +379,11 @@ export const useRecordVoice = (props) => {
       }
   };
 
+
+    /* Some alternatives/variations on blobToBase64 */
+    // **** XXXX Worth keeping these??
+    // **** Perhaps just the StackOverflow URL?
+    
 /*
   const blobToBase64Async = (blob, callback) => {
       const reader = new FileReader();

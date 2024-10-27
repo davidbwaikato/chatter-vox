@@ -2,9 +2,9 @@
     "lang"          : "en",
 
     "params": {
-	"speechToText"  : "fake",
-	"chatLLM"       : "fake",
-	"textToSpeech"  : "fake"	
+	"speechToText"  : "OpenAI",
+	"chatLLM"       : "OpenAI",
+	"textToSpeech"  : "OpenAI"	
     },
 
     "interfaceText" : {
