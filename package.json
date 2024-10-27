@@ -17,8 +17,10 @@
     "pm2": "^5.4.2",
     "react": "^18",
     "react-dom": "^18",
+    "react-loading": "^2.0.3",
     "react-markdown": "^9.0.1",
-    "tmp": "^0.2.3"
+    "tmp": "^0.2.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/react": "18.2.79",
