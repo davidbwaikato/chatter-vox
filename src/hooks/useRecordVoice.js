@@ -283,15 +283,8 @@ export const useRecordVoice = (props) => {
 		const result_messages = response.result;
 		const result_messages_len = result_messages.length;
 		
-		const result_message_pair = {
-		    userMessage: result_messages[result_messages_len-2],
-		    returnedTopMessage: result_messages[result_messages_len-1]
-		};
-		    		
-		console.log(result_message_pair);
-		const returned_top_message = result_message_pair.returnedTopMessage;
-		const chatResponseText = returned_top_message.content;
-
+		const returned_top_message = result_messages[result_messages_len-1];
+		
 		// Check to see if the LLM also identifed the language the request was in
 		const lang = props.configOptionsRef.current.lang;		
 		if ('language' in returned_top_message) {
@@ -301,9 +294,21 @@ export const useRecordVoice = (props) => {
 			props.updateLangCallback(returned_lang);
 		    }
 		}
-		
-		props.updateStatusCallback("_statusChatLLMResponseReceived_");
-		props.updateMessagesCallback(result_messages,result_message_pair); // **** changed from pair to array
+
+		// Check to see if it is a user interface configuration instruction
+		if ('configurationInstruction' in returned_top_message) {
+		    const is_a_configuration_instruction = returned_top_message.configurationInstruction;
+		    if (is_a_configuration_instruction) {
+			const lang_not_supported = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationNotSupported_",lang);
+			returned_top_message.content = lang_not_supported;
+			//result_messages[result_messages_len-1].content = lang_not_supported;
+		    }
+		}
+
+		const chatResponseText = returned_top_message.content;
+
+		props.updateStatusCallback("_statusChatLLMResponseReceived_");		
+		props.updateMessagesCallback(result_messages); 
 		
 		const lang_llm_says = interfaceTextResolver(props.configOptionsRef.current,"_LLMSays_",lang);
 		setText(lang_llm_says + ":\n" + chatResponseText);

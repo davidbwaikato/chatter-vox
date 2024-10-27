@@ -85,7 +85,12 @@
 	    "en": "A network error occured when trying to process the recognised text",
 	    "mi": "Kua whati te tūhononga rorohiko i a ${chatLLM} e whakaaro ana"
 	},
-        
+
+        "_textUIConfigurationNotSupported_": {
+	    "en": "Interface configuration instructions are not currently supported.",
+	    "mi": "Ko nga tohutohu whirihoranga atanga kaore i te tautokohia i tenei wa."
+	},
+	
 	"_statusAudioPlayerPaused_": {
 	    "en": "Paused",
 	    "mi": "E tū ana"

@@ -355,9 +355,19 @@ export default function Home()
         setMessages(updatedMessages);	        
     };
 */
-    const updateMessagesCallback = (updatedMessages,returnedMessagePair) => {
+    const updateMessagesCallback = (updatedMessages) => {
+
 	// For backwards compatability reasons with debugging output
-        console.log("**** returnedMessagePair = " + JSON.stringify(returnedMessagePair));
+	// ... form pair of last two items in the messages array
+	
+	const updated_messages_len = updatedMessages.length;
+	
+	const returned_message_pair = {
+	    userMessage: updatedMessages[updated_messages_len-2],
+	    returnedTopMessage: updatedMessages[updated_messages_len-1]
+	};
+	
+        console.log("**** Returned message pair: ", returned_message_pair);
 
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };

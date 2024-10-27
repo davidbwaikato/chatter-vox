@@ -22,13 +22,20 @@ const anthropic = new Anthropic({
 });
 
 
+const LanguageIdentifiedResponse = z.object({
+    markdownResponse: z.string(),
+    language: z.string(),
+    configurationInstruction: z.boolean()
+});
+
 const initialMessagesOpenAI = [
     { role: "system",    content: "You are a helpful assistant" }, // To set the general tone of the assistant
 
     { role: "system",    content:      
         `Always return your answer using JSON syntax.  
          The JSON should have a field called 'markdownResponse' that contains the LLM response to the given prompt using Markdown syntax.  
-         The JSON should also have a field called 'language' that identifies the language that the prompt was written in, using the 2 letter code version of ISO 3166.`
+         The JSON should also have a field called 'language' that identifies the language that the prompt was written in, using the 2 letter code version of ISO 3166.
+         The JSON should also have a field called 'configurationInstruction' that is a Boolean value that is set to true if the given prompt is actually an instruction about how the user would like the user-interface to be reconfigured.`
     },
       
     { role: "assistant", content: "How can I help you today?" } // i.e., synthesized response
@@ -71,11 +78,6 @@ async function POST_FAKE(body) {
 }
 
 
-const LanguageIdentifiedResponse = z.object({
-    markdownResponse: z.string(),
-    language: z.string()
-});
-
 async function POST_OPENAI(body) {
 
     const messages   = (body.messages == null) ? initialMessagesOpenAI : body.messages;
@@ -103,21 +105,21 @@ async function POST_OPENAI(body) {
 	});
 	
 	const returnedTopMessage_json = completion.choices[0].message.parsed;
-	//console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
+	console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
 	//console.log("****     choice[0] = ", completion.choices[0]);
 	
 	const returnedTopMessage =  {
 	    role: 'assistant',
 	    content: returnedTopMessage_json.markdownResponse,
 	    language: returnedTopMessage_json.language,
-	    refusal: completion.choices[0].message.refusal 
-	    
+	    configurationInstruction: returnedTopMessage_json.configurationInstruction,
+	    refusal: completion.choices[0].message.refusal 	    
 	};
 
 	const updatedMessagesWithTopAnswer = [...updatedMessages, returnedTopMessage ];
 	const response_data = { result: updatedMessagesWithTopAnswer };
 	
-	console.log("**** Response data:", response_data);	
+	//console.log("**** Response data:", response_data);	
 	return NextResponse.json(response_data);	
     }
     catch (error) {
