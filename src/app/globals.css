@@ -17,6 +17,23 @@ p.textmessage {
    padding-left: 2rem;
 }
 
+.textmessage h1 {
+    font-size: 120%;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.textmessage h2 {
+    font-size: 110%;
+    font-weight: bold;
+}
+
+.textmessage h3,h4 {
+    font-size: 105%;
+    font-style: italic;
+}
+
+
 .microphone-svgXXX {
     margin: 0.5rem;
     /* border-radius: 50%; */
