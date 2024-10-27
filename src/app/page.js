@@ -170,16 +170,11 @@ export default function Home()
     useEffect(() => {
 	console.log("[page.js] useEffect() [Lang] has changed: " + Lang);
 
-	// **** XXXX
-	//const NewConfigOptions = {...DefaultConfigOptions, "lang": Lang}
-	//configOptionsRef.current = NewConfigOptions
-	//setConfigOptions(NewConfigOptions);
-
 	if (configOptionsRef.current) {
 	    //console.log("**** setting configOptionsRef.current.lang = " + configOptionsRef.current.lang + ", Lang="+Lang);
 	    
 	    configOptionsRef.current.lang = Lang;	    
-	    //updateStatus("_statusWaiting_");
+	    updateStatus("_statusWaiting_"); // Used on initial load to update default "" to language specific version
 	}
 	
     }, [Lang]);
@@ -305,6 +300,8 @@ export default function Home()
 
     const handleAudioStop = () => {
         console.log("handleAudioStop()");
+	console.log("**** mediaPlayer.current.state = " + mediaPlayer.current.state);
+	
         if ((mediaPlayer.current.state === "playing") || (mediaPlayer.current.state === "paused")) {
             mediaPlayer.current.state = "inactive";
 	    updateStatus("_statusAudioPlayerStopped_");
@@ -313,6 +310,8 @@ export default function Home()
         }
 	else if (mediaPlayer.current.state === "processing") {
 	    abortControllerRef.current.abort("User interrupted processing");
+	    abortControllerRef.current = new AbortController();
+
             mediaPlayer.current.state = "inactive";
             setInterfaceMode(InterfaceModeEnum.inactive);	        
 	    updateStatus("_statusWaiting_");

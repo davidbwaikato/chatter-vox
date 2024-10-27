@@ -177,12 +177,13 @@ export const useRecordVoice = (props) => {
 	}
     };
 
-    const getSynthesizedSpeech = async (text) => {
+    const getSynthesizedSpeech = async (text, abortController) => {
 	props.updateStatusCallback("_statusTextToSpeechProcessing_");
 	
 	try {
 	    const response = await fetch("/api/textToSpeech", {
 		method: "POST",
+		signal: abortController.signal,		
 		headers: {
 		    "Content-Type": "application/json",
 		},
@@ -197,7 +198,7 @@ export const useRecordVoice = (props) => {
 		}
 		return json_str;
 	    }).catch(function(err) {
-		console.error(` Err: ${err}`);
+		console.error(`fetch(): ${err}`);
             });
 	    
 	    if (response != null) {
@@ -215,7 +216,7 @@ export const useRecordVoice = (props) => {
 		const synthesizedAudioBlob = await fetch(synthesizedAudioURL)
 		      .then(response => response.blob())
 		      .catch(function(err) {
-			  console.error(` Err: ${err}`);
+			  console.error(`fetch(): ${err}`);
 		      });
 
 		// **** if (synthesizedAudioBlob != null) { ..... update etc }
@@ -272,7 +273,7 @@ export const useRecordVoice = (props) => {
 		}
 		return json_str;
 	    }).catch(function(err) {
-		console.error(` Err: ${err}`);
+		console.error(`fetch(): ${err}`);
             });	    
 	    
 	    if (response != null) {
@@ -307,7 +308,7 @@ export const useRecordVoice = (props) => {
 		const lang_llm_says = interfaceTextResolver(props.configOptionsRef.current,"_LLMSays_",lang);
 		setText(lang_llm_says + ":\n" + chatResponseText);
 		
-		getSynthesizedSpeech(chatResponseText);		
+		getSynthesizedSpeech(chatResponseText,abortController);
 	    }
 	    else {		
 		const lang = props.configOptionsRef.current.lang;
@@ -350,7 +351,7 @@ export const useRecordVoice = (props) => {
 	      }
 	      return json_str;
 	  }).catch(function(err) {
-              console.error(` Err: ${err}`);
+              console.error(`fetch(): ${err}`);
           });
 	    
 

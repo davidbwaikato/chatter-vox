@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
 
-//import fs   from "fs";
-//import path from "path";
-
 import * as dotenv from "dotenv";
 import { env } from "../../config/env";
 
@@ -23,7 +20,6 @@ const openai = new OpenAI({
 const anthropic = new Anthropic({
   apiKey: process.env['ANTHROPIC_API_KEY'], // This is the default and can be omitted
 });
-
 
 
 const initialMessagesOpenAI = [
@@ -55,23 +51,20 @@ const initialMessagesClaude = [
 
 async function POST_FAKE(body) {
     
-    const response_pair = {
-	result: {
-	    userMessage: {
+    const response_data = {
+	result: [
+	    {
 		role:    "user",
 		content: "What is the name of the river thay flows through Hamilton, New Zealand"
 	    },
-	    returnedTopMessage: {
+	    {
 		role:    "assistant",
 		content: "The river that flows through Hamilton, New Zealand is the Waikato River. [Hardwired Response]",
 		language: "en"
 	    }
-	}
+	]
     };
 
-    // Reform result_pair into new array-of-all-messages form
-    const response_data = { result: [ response_pair.result.userMessage, response_pair.result.returnedTopMessage ] };
-    
     await sleep(2000);
 		
     return NextResponse.json(response_data);
@@ -93,8 +86,6 @@ async function POST_OPENAI(body) {
     
     //console.log(`promptText = ${promptText}`);
     
-    //promptText += "\n\nReturn your answer using JSON syntax.  The JSON should have a field called 'markdownResponse' that contains the LLM response to the given prompt using Markdown syntax.  The JSON should also have a field called 'language' that identifies the language that the prompt was written in, using the 2 letter code version of ISO 3166";
-    
     const newUserMessage = {
 	role: "user",
 	content: promptText
@@ -112,8 +103,8 @@ async function POST_OPENAI(body) {
 	});
 	
 	const returnedTopMessage_json = completion.choices[0].message.parsed;
-	console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
-	console.log("****     choice[0] = ", completion.choices[0]);
+	//console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
+	//console.log("****     choice[0] = ", completion.choices[0]);
 	
 	const returnedTopMessage =  {
 	    role: 'assistant',
@@ -122,9 +113,6 @@ async function POST_OPENAI(body) {
 	    refusal: completion.choices[0].message.refusal 
 	    
 	};
-
-	// ****
-	//const response_data = { result: { userMessage: newUserMessage, returnedTopMessage: returnedTopMessage} };
 
 	const updatedMessagesWithTopAnswer = [...updatedMessages, returnedTopMessage ];
 	const response_data = { result: updatedMessagesWithTopAnswer };
@@ -147,9 +135,7 @@ async function POST_CLAUDE(body)
     console.log("[ChatLLM route.js, Clause] [context} messages:");
     console.log(messages);
 
-    /*		
-    console.log(`promptText = ${promptText}`);
-    */
+    //console.log(`promptText = ${promptText}`);
     
     const newUserMessage = {
 	role: "user",
@@ -157,16 +143,9 @@ async function POST_CLAUDE(body)
     };
     
     const updatedMessages = [...messages, newUserMessage];
-    //updatedMessages.shift();
-    //updatedMessages.shift();
-
-    //updatedMessages.unshift({"role": "assistant", "content": "Tēnā koe. Ka āhei ahau ki te whakahoki i ētahi whakautu i te reo Māori, engari kāore anō ā tō̅ku mōhio i te reo Māori e tino whānui ana. Mehemea ka tīmatahia koe ki te kōrero Māori, ka whakaputa ā tōku engari kāore ā tōku i te tino pūkenga ki tēnei reo."});
-    //updatedMessages.unshift({"role": "user", "content": "You are a chatbot that always gives your answers in te reo Maori"});
-
     
     //console.log("[Anthropic/Claude route.js] updatedMessages:");
     //console.log(updatedMessages);
-
     
     try {
 	const message = await anthropic.messages.create({
@@ -178,10 +157,6 @@ async function POST_CLAUDE(body)
 	//console.log(message.content);
 	
 	const returnedTopMessage = { role: "assistant", content: message.content[0].text }
-
-	// ****
-	//const response_data = { result: { userMessage: newUserMessage, returnedTopMessage: returnedTopMessage} };
-
 
 	const updatedMessagesWithTopAnswer = [...updatedMessages, returnedTopMessage ];
 	const response_data = { result: updatedMessagesWithTopAnswer };
@@ -195,8 +170,6 @@ async function POST_CLAUDE(body)
 	console.error("Error getting Anthropic Claude response to promptText:", error);
 	return NextResponse.error();
     }    
-
-    
 }
 
 const PostLookup = {
