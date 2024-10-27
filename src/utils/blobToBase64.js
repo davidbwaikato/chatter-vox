@@ -1,5 +1,6 @@
 
-//callback - where we want to get result
+//  callback() => where we want to result to go
+
 const blobToBase64 = (blob,abortController, callback) => {
     console.log("blobToBase64()", blob);
     
