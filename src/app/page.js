@@ -233,8 +233,21 @@ export default function Home()
 	messagesRef.current = messages;
     }, [messages]);
 
-    const updateLang = (new_lang) => {
-	const newConfigOptions = {...ConfigOptions, lang: new_lang};
+    const updateLang = (newLang,newInterfaceText) => {
+
+	/*
+	let newConfigOptions = {...ConfigOptions};
+	newConfigOptions.lang = newLang;
+	if (optNewInterfaceText != null) {
+	    newConfigOptions.interfaceText = {...optNewInterfaceText};
+	}
+	//const newConfigOptions = {...ConfigOptions, lang: newLang};
+	*/
+
+	// **** Also need to update interfaceText.interfaceLangs
+	
+	const newConfigOptions = {...ConfigOptions, lang: newLang};
+	//const newConfigOptions = {...ConfigOptions, lang: newLang, interfaceText: {...newInterfaceText}};
 	setConfigOptions(newConfigOptions);
 	configOptionsRef.current = newConfigOptions;
     };

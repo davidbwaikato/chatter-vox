@@ -7,6 +7,8 @@
 	"textToSpeech"  : "OpenAI"	
     },
 
+    "interfaceLangs": [ "en", "mi" ],
+    
     "interfaceText" : {
 	"_howCanIHelp_": {
 	    "en": "How can I help?",

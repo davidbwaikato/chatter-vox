@@ -174,6 +174,127 @@ async function POST_CLAUDE(body)
     }    
 }
 
+
+async function postGenerateLanguageInterfaceOpenAI(body) {
+        
+    console.log("[ChatLLM route.js, OpenAI] GenerateLanguageInterface");
+
+    const InterfaceTextResponse = z.object({
+	markdownResponse: z.string(),
+	language: z.string(),
+	configurationInstruction: z.boolean()
+    });
+
+    const languageFragSchema = z.record(
+	//z.string().length(2),
+	z.string(),
+	z.string()           
+    );
+
+    const interfaceTextSchema = z.record(
+	//z.string().regex(/^_/, "Key must start with an underscore"), // Keys must start with "_"
+	z.string(),
+	languageFragSchema 
+    );
+
+    const genericSchema = z.object();
+    
+    /*
+    const generateNewLanguageMessages = [
+	{ role: "system", content: "You are an assistant that specializes in translating from English to other languages that will be used in a multi-lingual user interface." },
+	
+	{ role: "system", content: "The majority of the text you will be asked to translate are short text fragments.  When the text you are asked to translate is longer in length, then this is typically a sign that it is used to convey general help information to the user in the user-interface, and so will be expressed in more naturally, free-flowing sentences." },
+
+	{ role: "system", content: "The text to translate will be provided to you as a JSON Object.  The keys to the objects are the labels that the computer software uses to look up an individual text fragments.  The key label should never be changed." },
+	{ role: "system", content: "In retrieving one of the key entries, a JSON object is returned that represents all the currently translated versions of that text fragment. The keys to this returned object are the 2 letter code version of ISO 3166.  There is always a key for 'en', which represents the English text phrase.  All the other keys in the returned object are the result of earlier translations." }
+    ];
+    */
+    
+
+    const generateNewLanguageMessages = [
+	{ role: "system", content:
+	  `You are an assistant that specializes in translating from English to other languages that will be used in a multi-lingual user interface.
+           The majority of the text you will be asked to translate are short text fragments.  When the text you are asked to translate is longer in length, then this is typically a sign that it is used to convey general help information to the user in the user-interface, and so will be expressed in more naturally, free-flowing sentences.
+           The text to translate will be provided to you as a JSON Object.  The keys to the objects are the labels that the computer software uses to look up an individual text fragments.  The key label should never be changed.
+           In retrieving one of the key entries, a JSON object is returned that represents all the currently translated versions of that text fragment. The keys to this returned object are the 2 letter code version of ISO 3166.  There is always a key for 'en', which represents the English text phrase.  All the other keys in the returned object are the result of earlier translations.`
+	}
+    ];
+    const configOptions = body.configOptions;
+    const newLang = body.newLang;
+/*    
+    generateNewLanguageMessages.push({
+	role: "user",
+	content: "Here is the current JSON object representing the translation of all the text fragements used in the interface"
+    });
+
+    generateNewLanguageMessages.push({
+	role: "user",
+	content: JSON.stringify(configOptions.interfaceText)
+    });
+
+
+    generateNewLanguageMessages.push({
+	role: "user",
+	content: `Based on the 'en' entry for a text fragment, return an updated version of the JSON object where a new '${newLang}' entry has be added in for all of the keys.`
+    });
+*/
+
+    generateNewLanguageMessages.push({
+	role: "user", content:
+	"Here is the current JSON object representing the translation of all the text fragements used in the interface\n"
+	+JSON.stringify(configOptions.interfaceText)+"\n"
+	+`Based on the 'en' entry for a text fragment, return an updated version of the JSON object where a new '${newLang}' entry has be added in for all of the keys.`
+    });
+
+    console.log("**** generateNewLanguageMessages = ", generateNewLanguageMessages);
+    
+    try {
+	//const completion = await openai.beta.chat.completions.parse({
+	const completion = await openai.chat.completions.create({	    
+	    model: "gpt-4o",
+	    messages: generateNewLanguageMessages,
+	    temperature: 0,
+	    //response_format: zodResponseFormat(interfaceTextSchema, "language_identified_response")
+	    //response_format: zodResponseFormat(genericSchema, "language_identified_response")
+	    response_format: { type: "json_object" }
+	});
+
+	console.log("**** !!!! completion message = ", completion.choices[0].message);
+	//const response_data = completion.choices[0].message.parsed;
+	//const response_data = JSON.parse(completion.choices[0].message);
+	const response_data = completion.choices[0].message;
+
+	return NextResponse.json(response_data);
+
+	/*
+	const returnedTopMessage_json = completion.choices[0].message.parsed;
+	console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
+	console.log("****     choice[0] = ", completion.choices[0]);
+	
+	const returnedTopMessage =  {
+	    role: 'assistant',
+	    content: returnedTopMessage_json,
+	    refusal: completion.choices[0].message.refusal 	    
+	};
+
+	//const updatedMessagesWithTopAnswer = [...generateNewLanguageMessages, returnedTopMessage ];
+
+	//const response_data = { result: updatedMessagesWithTopAnswer };
+	const response_data = { result: returnedTopMessage };
+	
+	//console.log("**** Response data:", response_data);	
+	return NextResponse.json(response_data);	
+*/
+    }
+    catch (error) {
+	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);	
+	return NextResponse.error();
+    }    
+}
+
+
+
+
 const PostLookup = {
     "fake"      : POST_FAKE,
     "Claude"    : POST_CLAUDE,
@@ -185,11 +306,25 @@ export async function POST(req)
 {    
     const body = await req.json();
     const configOptions = body.configOptions;
-
+        
     //console.log(configOptions);
-    const post_lookup_fn = PostLookup[configOptions.params.chatLLM];
 
-    const returned_response = post_lookup_fn(body);
+    let returned_response = null;
+    
+    if (body.mode == "GenerateLanguageInterface") {
+	// Get this done with OpenAI's ChatGPT for now
+	//await  postGenerateLanguageInterfaceOpenAI(body); // **** is this more correctly done with an await ???? 
+	returned_response = postGenerateLanguageInterfaceOpenAI(body);
+	
+    }
+    else if (body.mode == "ProcessUserPrompt") {
+	const post_lookup_fn = PostLookup[configOptions.params.chatLLM];
 
+	returned_response = post_lookup_fn(body);
+    }
+    else {
+	console.error(`[root.js, chatLLM] Unrecognised body.mode: '${body.mode}'`);
+    }
+    
     return returned_response;
 }

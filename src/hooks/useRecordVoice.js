@@ -232,6 +232,55 @@ export const useRecordVoice = (props) => {
     };
 
     
+    const getNewInterfaceLang = async (newLang) => {
+	// No need for abortInterface on this one, as we want the /chatLLM fetch() here
+	// to go ahead and get the translated user interface language, indepedent
+	// of whether or not the user stops their actually asked question/entered prompt
+
+	
+	const response = await fetch("/api/chatLLM", {
+	    method: "POST",
+	    headers: {
+		"Content-Type": "application/json",
+	    },
+	    body: JSON.stringify({
+		configOptions: props.configOptionsRef.current,
+		mode: "GenerateLanguageInterface",
+		newLang: newLang
+	    }),
+	    }).then((res) => {
+		let json_str = null;
+		if (res.status == 200) {
+		    json_str = res.json();
+		}
+		return json_str;
+	    }).catch(function(err) {
+		console.error(`getNewInterfaceLang(), fetch(): ${err}`);
+            });	    
+	
+	if (response != null) {
+	    //const result_messages = response.result;
+	    //const result_messages_len = result_messages.length;
+	    
+	    //const returned_top_message = result_messages[result_messages_len-1];
+	    
+	    //props.configOptionsRef.current.interfaceText = response;
+
+	    const newInterfaceText = response;
+	    
+	    props.configOptionsRef.current.lang = newLang; // do I need this ????
+	    props.updateLangCallback(newLang,newInterfaceText);
+	}
+	else {
+	    console.error("Failed to retrieve new interface text from LLM");
+	    
+	    //const lang = props.configOptionsRef.current.lang;
+	    //const lang_ti_network_error = interfaceTextResolver(props.configOptionsRef.current,"_textInfoNetworkError_",lang);
+	    //setText(lang_ti_network_error);
+	    //props.updateStatusCallback("_statusNetworkError_");
+	}
+    };
+
     const getPromptResponse = async (promptText, abortController) => {
 	props.updateStatusCallback("_statusChatLLMProcessing_");
 		    
@@ -261,6 +310,7 @@ export const useRecordVoice = (props) => {
 		},
 		body: JSON.stringify({
 		    configOptions: props.configOptionsRef.current,
+		    mode: "ProcessUserPrompt",		    
 		    //messages: JSON.parse(props.messages),
 		    messages: props.messagesRef.current,
 		    // //messages: messages,
@@ -277,24 +327,31 @@ export const useRecordVoice = (props) => {
             });	    
 	    
 	    if (response != null) {
-		// Updated to return the full list of messages
-		// => Massage back into the "result_pair" form
-		
 		const result_messages = response.result;
 		const result_messages_len = result_messages.length;
 		
 		const returned_top_message = result_messages[result_messages_len-1];
 		
-		// Check to see if the LLM also identifed the language the request was in
+		// Check to see if the LLM identifed the language the request was in
+		// => If language different to the current Lang state, then trigger change
 		const lang = props.configOptionsRef.current.lang;		
 		if ('language' in returned_top_message) {
 		    const returned_lang = returned_top_message.language;
 		    if (returned_lang != lang) {
-			props.configOptionsRef.current.lang = returned_lang;
-			props.updateLangCallback(returned_lang);
+			const config_options_ref = props.configOptionsRef.current;
+			
+			if (returned_lang in config_options_ref.interfaceLangs) {
+			    config_options_ref.current.lang = returned_lang;
+			    props.updateLangCallback(returned_lang,config_options_ref.interfaceText);
+			}
+			else {
+			    // Asynchronously get new language text
+			    // => change in interface occurs when its fetch() returns data			    
+			    getNewInterfaceLang(returned_lang);
+			}
 		    }
 		}
-
+		
 		// Check to see if it is a user interface configuration instruction
 		if ('configurationInstruction' in returned_top_message) {
 		    const is_a_configuration_instruction = returned_top_message.configurationInstruction;
