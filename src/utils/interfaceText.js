@@ -1,4 +1,13 @@
 
+// The following function was generated using ChatGPT in response to
+// the prompt:
+//
+//   If I have read in a JSON file and it includes string literals
+//   that are really template literals in disguise, how to I
+//   'evaluate' them so the variables in my program get substituted
+//   in?
+
+
 
 /**
  * Evaluates a template-like string with variable substitution.

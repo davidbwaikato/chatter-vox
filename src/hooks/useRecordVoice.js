@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { blobToBase64 } from "@/utils/blobToBase64"; // **** remove util file ??
+
+import { interfaceTextResolver } from "@/utils/interfaceText";
+
+import { blobToBase64 } from "@/utils/blobToBase64"; // **** Only used in one place (here) => merge and remove file?
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
@@ -296,16 +299,29 @@ export const useRecordVoice = (props) => {
 	    if (response != null) {
 		// The returned top message from ChatLMM
 		const result_message_pair = response.result;
+
 		console.log(result_message_pair);
-		const chatResponseText = result_message_pair.returnedTopMessage.content;	    
+		const returned_top_message = result_message_pair.returnedTopMessage;
+		const chatResponseText = returned_top_message.content;
+
+		// Check to see if the LLM also identifed the language the request was in
+		const lang = props.configOptionsRef.current.lang;		
+		if ('language' in returned_top_message) {
+		    const returned_lang = returned_top_message.language;
+		    if (returned_lang != lang) {
+			props.configOptionsRef.current.lang = returned_lang;
+			props.updateLangCallback(returned_lang);
+		    }
+		}
+		
 		//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response received");
 		props.updateStatusCallback("_statusChatLLMResponseReceived_");
 		props.updateMessagesCallback(result_message_pair);
 		
-		//setText(props.configOptionsRef.current.chatLLM + " says: " + chatResponseText); // ****
-		const lang = props.configOptionsRef.current.lang;
-		const lang_llm_says = props.configOptionsRef.current.interfaceText["_LLMSays_"][lang];
-		setText(lang_llm_says + ": " + chatResponseText); // ****
+		// //setText(props.configOptionsRef.current.chatLLM + " says: " + chatResponseText); // ****
+		// const lang_llm_says = props.configOptionsRef.current.interfaceText["_LLMSays_"][lang];
+		const lang_llm_says = interfaceTextResolver(props.configOptionsRef.current,"_LLMSays_",lang);
+		setText(lang_llm_says + ":\n" + chatResponseText); // ****
 		
 		getSynthesizedSpeech(chatResponseText);		
 	    }
@@ -314,7 +330,8 @@ export const useRecordVoice = (props) => {
 		//props.updateStatusCallback("No response received from " + props.configOptionsRef.current.chatLLM);
 
 		const lang = props.configOptionsRef.current.lang;
-		const lang_llm_no_response = props.configOptionsRef.current.interfaceText["_statusChatLLMNoResponseReceived_"][lang];
+		//const lang_llm_no_response = props.configOptionsRef.current.interfaceText["_statusChatLLMNoResponseReceived_"][lang];
+		const lang_llm_no_response = interfaceTextResolver(props.configOptionsRef.current,"_statusChatLLMNoResponseReceived_",lang);
 		setText(lang_llm_no_response);
 		props.updateStatusCallback("_statusChatLLMNoResponseReceived_");		
 	    }
@@ -322,7 +339,8 @@ export const useRecordVoice = (props) => {
 	}
 	catch (error) {
 	    const lang = props.configOptionsRef.current.lang;
-	    const lang_ti_network_error = props.configOptionsRef.current.interfaceText["_textInfoNetworkError_"][lang];
+	    //const lang_ti_network_error = props.configOptionsRef.current.interfaceText["_textInfoNetworkError_"][lang];
+	    const lang_ti_network_error = interfaceTextResolver(props.configOptionsRef.current,"_textInfoNetworkError_",lang);
 	    setText(lang_ti_network_error);
 	    props.updateStatusCallback("_statusNetworkError_");
 	    
@@ -362,7 +380,8 @@ export const useRecordVoice = (props) => {
 	      //const audioFilename  = response.recordedAudioFilename;
 
 	      const lang = props.configOptionsRef.current.lang;
-	      const lang_ti_recognised = props.configOptionsRef.current.interfaceText["_textInfoRecognisedTextSpoken_"][lang];	      
+	      //const lang_ti_recognised = props.configOptionsRef.current.interfaceText["_textInfoRecognisedTextSpoken_"][lang];
+	      const lang_ti_recognised = interfaceTextResolver(props.configOptionsRef.current,"_textInfoRecognisedTextSpoken_",lang);
 	      setText(lang_ti_recognised+": " + text);
 	      
 	      props.updateStatusCallback("_statusSpeechToTextCompleted_");

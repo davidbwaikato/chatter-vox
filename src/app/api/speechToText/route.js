@@ -148,7 +148,7 @@ export async function POST(req)
     const configOptions = body.configOptions;
 
     //console.log(configOptions);
-    const post_lookup_fn = PostLookup[configOptions.speechToText];
+    const post_lookup_fn = PostLookup[configOptions.params.speechToText];
 
     const returned_response = post_lookup_fn(body);
     /*

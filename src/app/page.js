@@ -1,8 +1,14 @@
 "use client"
 
-import React, { useState, useEffect, useRef  } from 'react';
+//const fs = require('fs');
+//const path = require('path');
 
-//import { useRecordVoice } from "@/hooks/useRecordVoice";
+import React, { useState, useEffect, useRef, useCallback  } from 'react';
+
+import ReactLoading from 'react-loading';
+ 
+
+import { interfaceTextResolver } from "@/utils/interfaceText";
 
 import { MicrophoneModeEnum,  Microphone  } from "@/app/components/Microphone";
 import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
@@ -11,145 +17,26 @@ import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpec
 
 import AbortController from "abort-controller";
 
-const defaultChatLLM  = "OpenAI";
-//const defaultChatLLM  = "Claude";
-
-const InterfaceText = {
-
-    _howCanIHelp_: {
-	"en": "How can I help?",
-	"mi": "Kōrero mai ..."
-    },
-    _microphoneInstructions_: {
-	"en": "Press and hold the microphone button to record.",
-	"mi": "Pātene hopu reo."
-    },
-
-    _showtext_: {
-	"en": "Show Text",
-	"mi": "Whakaatu Kupu"
-    },
-    _hidetext_: {
-	"en": "Hide Text",
-	"mi": "Huna Kupu"
-    },
-    
-    _statusLabel_: {
-	"en": "Status",
-	"mi": "Tūnga" // **** Translated via Google, then checked against some te reo dictionary resources
-    },
-    _statusWaiting_: {
-	"en": "Waiting for audio input ...",
-	"mi": "E whanga ana ki tō reo ..."
-    },
-    _statusUnableToRecord_: {
-	"en": "Unable to record",
-	"mi": "Kaore e taea te tuhi" // **** Translated via Google
-    },
-    _statusRecording_: {
-	"en": "Recording ...",
-	"mi": "E hopu ana ..."
-    },
-    _statusSpeechToTextProcessing_: {
-	"en": "Text recognition of recorded audio ...",
-	"mi": "E whakarite ana te kupu kōrero ki te kupu tuhi..."
-    },
-    _statusSpeechToTextCompleted_: {
-	"en": "Spoken text recognised",
-	"mi": "Kua hopu kōrero"
-    },
-    _textInfoRecognisedTextSpoken_: {
-	"en": "Recognised spoken text",
-	"mi": "Ko ngā kōrero kua hopu"
-    },
-    
-    _statusChatLLMProcessing_: {
-	"en": `Recognised text being processed by ${defaultChatLLM} ...`,
-	"mi": `E hanga whakaaro ana a ${defaultChatLLM} ...`,
-    },
-    _statusTextToSpeechProcessing_: {
-	"en": `${defaultChatLLM}'s response being synthesized as audio ...`,
-	"mi": "E whakarite ana te kupu tuhi ki te kupu kōrero ..."
-    },
-    _statusPlayingSynthesizedResult_: {
-	"en": "Playing the synthesized audio response ...",
-	"mi": "E kōrero ana ..."
-    },
-
-    _statusChatLLMResponseReceived_: {
-	"en": `${defaultChatLLM}'s response received`,
-	"mi": `Kua whakahoki kōrero mai a ${defaultChatLLM}`
-    },
-    _statusChatLLMNoResponseReceived_: {
-	"en": `No response received from ${defaultChatLLM}`,
-	"mi": `Kāore a ${defaultChatLLM} i whakahoki kōrero mai`
-    },
-
-    _statusNetworkError_: {
-	"en": "A network error occured",
-	"mi": "Kua whati te tūhononga rorohiko"
-    },
-    _textInfoNetworkError_: {
-	"en": "A network error occured when trying to process the recognised text",
-	"mi": `Kua whati te tūhononga rorohiko i a ${defaultChatLLM} e whakaaro ana`
-    },
-        
-    _statusAudioPlayerPaused_: {
-	"en": "Paused",
-	"mi": "E tū ana"
-    },
-    _statusAudioPlayerPlaying_: {
-	"en": "Playing",
-	"mi": "E kōrero ana",
-    },
-    _statusAudioPlayerStopped_: {
-	"en": "Stopped playing",
-	"mi": "Kua mutu te kōrero",
-    },
-    _statusMicrophoneRecordingStopped_: {
-	"en": "Stopped recording",
-	"mi": "Kua mutu te hopu"
-    },
-    
-    
-    _LLMSays_: {
-	"en": `${defaultChatLLM} says`,
-	"mi": `ki tā ${defaultChatLLM}`
-    }
-};
-
-//const DefaultLang = "mi";
-const DefaultLang = "en";
-
-
-const DefaultConfigOptions = {
-    speechToText : "OpenAI",
-    chatLLM      : `${defaultChatLLM}`,
-    textToSpeech : "OpenAI",
-    //speechToText : "PapaReo",
-    //textToSpeech : "PapaReo",
-
-    lang: DefaultLang,
-    interfaceText: InterfaceText
-};
+//const defaultChatLLM  = "OpenAI";
+// //const defaultChatLLM  = "Claude";
 
 
 const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "processing":3, "playing":4, "paused":5 });
 
 export default function Home()
 {
-    //const [ConfigOptions, setConfigOptions] = useState(DefaultConfigOptions);
-    const [Lang,          setLang         ] = useState(DefaultLang);
+    const isMounted = useRef(false); // Used to ensure useEffect(),[] inits withside effects are idempotent
+    const [isLoading, setIsLoading] = useState(true);
+    
+    const [ConfigOptions, setConfigOptions] = useState(null);
+    const [Lang,          setLang         ] = useState("");
     
     const [interfaceMode,   setInterfaceMode]   = useState(InterfaceModeEnum.inactive);
     const [microphoneMode,  setMicrophoneMode]  = useState(MicrophoneModeEnum.inactive);
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
 
-    //const defaultStatusText = "Waiting for audio input";
-    //const defaultStatusText = ConfigOptions.interfaceText["_statusWaiting_"][Lang];
-    const defaultStatusText = DefaultConfigOptions.interfaceText["_statusWaiting_"][Lang];
-    // //const [statusText, setStatusText]     = useState(ConfigOptions.interfaceText["_statusLabel_"][DefaultLang] + ": " + defaultStatusText);
-    const [statusText, setStatusText]     = useState(defaultStatusText);
+    const [howCanIHelpText, setHowCanIHelpText] = useState(""); 
+    const [statusText, setStatusText]     = useState("");
 
     const [blob, setBlob]                 = useState(null); // <Blob>
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
@@ -167,26 +54,77 @@ export default function Home()
     
     let microphoneImperativeRef = null;
     let visualizerImperativeRefUNUSED = null;
-    
-    const configOptionsRef = useRef(DefaultConfigOptions); // Currently, a generic object/hashmap
+
+    const configOptionsRef = useRef(null); 
     const messagesRef      = useRef(null);    
     const mediaPlayer      = useRef(null); // <MediaPlayer>
 
     const abortControllerRef = useRef(null);
-    
-    //const mediaPlayerWidth     = window.innerWidth < 600 ? 280 : 400;
-    // https://dev.to/vvo/how-to-solve-window-is-not-defined-errors-in-react-and-next-js-5f97
-    //const mediaPlayerWidth     = ((typeof window !== "undefined") && (window.innerWidth < 600)) ? 280 : 400;
-    //const mediaPlayerHeight    = 132;
-    //const audioControllerWidth = 46;
 
-    //const interfaceWidth = mediaPlayerWidth + audioControllerWidth;
-    
-    
     useEffect(() => {
-	console.log("**** page.js useEffect([]) Init app");
+	// This init makes use of a side-effect, so needs to be controlled so it is only called once
+	// Some NodeJS-based development modes call init twice to stress-test idempotency	
+	if (isMounted.current) {
+	    //console.log("[page.js] Init useEffect(),[] with side-effect already called.  Skipping repeated call.");
+	    return;
+	}
+	isMounted.current = true;
+
+	console.log("[page.js] Init useEffect() loading Interface JSON Config with fetch() as side-effect");
 	
+	async function fetchConfigData() {
+	    try {
+		// Fetch the JSON file from the public directory
+		const response = await fetch("/interface-config.json");
+		if (!response.ok) {
+		    throw new Error('Failed to load JSON file');
+		}
+		const data = await response.json();
+
+		console.log("Fetch data returned");
+
+		// Check to see if 'lang' in URL params
+		const queryParams = new URLSearchParams(window.location.search);
+		const lang_param = queryParams.get('lang'); 
+		
+		if (lang_param) {
+		    
+		    if (lang_param != data.lang) {
+			console.log("Changing display language based on URL param: " + lang_param);
+			data.lang = lang_param;
+		    }
+		}
+		
+		setConfigOptions(data);
+		configOptionsRef.current = data;
+		//setLang(data.lang);
+		//setHowCanIHelpText(interfaceTextResolver(configOptionsRef.current,"_howCanIHelp_",data.lang));
+				   
+		console.log("ConfigOptios set: ", data);		
+	    }
+	    catch (error) {
+		console.error("Error reading the JSON file:", error);
+	    }
+	    finally {
+		// Stop loading once done
+		console.log("Setting isLoading to false");
+		setIsLoading(false);
+	    }
+	}
+
+	// App Init
+	// => Get the config settings up and running
+	console.log("App Init => load config");
+	console.log("  isLoading = " + isLoading);
+	fetchConfigData();	
+    }, []);
+
+    useEffect(() => {
+	// Further App inits
+	console.log("[page.js] Init useEffect() if 'window' defined and 'mediaPlayer.current' != null");
+	      
 	if (typeof window !== 'undefined') {
+	    //console.log("App init, dynamically setting MediaPlayer dimensions");
 	    if (window.innerWidth < 600) {
 		const width = 280;
 		setMediaPlayerWidth(width);
@@ -199,20 +137,20 @@ export default function Home()
 	    mediaPlayer.current = new MediaPlayer(function() {
 		// callback function, when audio stops playing
 		console.log("mediaPlayer.onstopplaying() callback called!");
-		updateStatus(defaultStatusText);
+		updateStatus("_statusWaiting_");
                 setBlob(null);
-	    });
-
+		});	    
 	}
-
+	
 	if (abortControllerRef.current == null) {
 	    abortControllerRef.current = new AbortController();
 	}
 	
     }, []);
 
-
+/*
     useEffect(() => {
+	console.log("[page.js] Init useEffect() check URLSearchParam");
 	const queryParams = new URLSearchParams(window.location.search);
 	const lang_param = queryParams.get('lang'); 
 
@@ -222,20 +160,36 @@ export default function Home()
 		//const NewConfigOptions = {...ConfigOptions, "lang": lang_param}
 
 		// //NewConfigOptions["lang"] = lang_param;
+		console.log("URL lang param: " + lang_param);
 		setLang(lang_param);
 		//setConfigOptions(NewConfigOptions);
 	    }
 	}
     }, []);
+*/
     
+    // **** XXXX
+    useEffect(() => {
+	console.log("[page.js] useEffect() [ConfigOptions] has changed: ");
+	if (ConfigOptions != null) {
+	    setLang(ConfigOptions.lang);
+	    setHowCanIHelpText(interfaceTextResolver(ConfigOptions,"_howCanIHelp_",ConfigOptions.lang));	    
+	}
+    }, [ConfigOptions]);
 
     useEffect(() => {
+	console.log("[page.js] useEffect() [Lang] has changed: " + Lang);
+
 	//const NewConfigOptions = {...DefaultConfigOptions, "lang": Lang}
 	//configOptionsRef.current = NewConfigOptions
 	//setConfigOptions(NewConfigOptions);
 
-	configOptionsRef.current.lang = Lang;
-	updateStatus(defaultStatusText);
+	if (configOptionsRef.current) {
+	    //console.log("**** setting configOptionsRef.current.lang = " + configOptionsRef.current.lang + ", Lang="+Lang);
+	    
+	    configOptionsRef.current.lang = Lang;	    
+	    updateStatus("_statusWaiting_");
+	}
 	
     }, [Lang]);
     
@@ -259,10 +213,15 @@ export default function Home()
 
     
     useEffect(() => {
-	//console.log("**** **** **** InterfaceMode state has changed: ", interfaceMode);
+	// **** XXXX
+	if (isLoading) { return }
+	// Or consider testing for 'ref'
+	
         if (interfaceMode === InterfaceModeEnum.inactive) {
             setMicrophoneMode(MicrophoneModeEnum.inactive);
-	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
+	    //if (microphoneImperativeRef != null) {
+		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
+	    //}
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }
         else if (interfaceMode === InterfaceModeEnum.recording) {
@@ -270,30 +229,49 @@ export default function Home()
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }            
         else if (interfaceMode === InterfaceModeEnum.processing) {
-	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //console.log("**** **** **** InterfaceModeEnum === processing, => setting mediaPlayer state to processing");
+	    //if (microphoneImperativeRef != null) {
+		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
+	    //}
 	    mediaPlayer.current.state = "processing";
 	    
         }            
         else if (interfaceMode === InterfaceModeEnum.playing) {
             setMicrophoneMode(MicrophoneModeEnum.disabled);
-	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
+	    //if (microphoneImperativeRef != null) {	    
+		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
+	    //}
             setAudioPlayerMode(AudioPlayerModeEnum.playing);
         }
         else if (interfaceMode === InterfaceModeEnum.paused) {
             setMicrophoneMode(MicrophoneModeEnum.disabled);
-	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);	    
+	    //if (microphoneImperativeRef != null) {
+		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
+	    //}
             setAudioPlayerMode(AudioPlayerModeEnum.paused);
         }        
     }, [interfaceMode]);
 
 
     useEffect(() => {
+	console.log("[page.js] App useEffect(), [messages] has changed: ", messages);
 	messagesRef.current = messages;
     }, [messages]);
-    
+
+    const updateLang = (new_lang) => {
+	const newConfigOptions = {...ConfigOptions, lang: new_lang};
+	setConfigOptions(newConfigOptions);
+	configOptionsRef.current = newConfigOptions;
+    };
+	
     const updateStatus = (text_marker) => {
-	console.log("*** updateStatus(), Lang = " + Lang + ", text_marker = " + text_marker);	
+	// This function needs to work with the configOptionsRef version of language
+	// This is because calling the method sometimes occurs in from a callback function
+	// and when the closure of the callback function is created, the Lang state is
+	// as it is then is 'baked' in (i.e. is an older/stale version of the state).
+	
+	const Lang_ref = configOptionsRef.current.lang;
+	
+	console.log("*** updateStatus(), (dynamic look) Lang_ref = " + Lang_ref + ", text_marker = " + text_marker);	
 	let lang_text = text_marker;
 	
 	if (text_marker in configOptionsRef.current.interfaceText) {
@@ -304,15 +282,20 @@ export default function Home()
 	    else if (text_marker.match(/(Completed_|Recieved_|Result_)$/)) {
 		setInterfaceMode(InterfaceModeEnum.inactive);		
 	    }
-	    
-	    lang_text = configOptionsRef.current.interfaceText[text_marker][Lang];
+
+	    lang_text = interfaceTextResolver(configOptionsRef.current,text_marker,Lang_ref);	    
 	}
 
-	const status_label = configOptionsRef.current.interfaceText["_statusLabel_"][Lang];
+	const status_label = interfaceTextResolver(configOptionsRef.current,"_statusLabel_",Lang_ref);
 
-	// Te Taka requested that there be no 'status: ' text
-	//setStatusText(status_label+ ": " + lang_text)
-	setStatusText(lang_text)
+	if (Lang_ref == "mi") {
+	    // Te Taka requested that there be no 'status: ' text
+	    setStatusText(lang_text);
+	}
+	else {
+	    setStatusText(status_label+ ": " + lang_text);
+	}
+
     };
 
     const handleAudioPauseToggle = () => {
@@ -363,8 +346,6 @@ export default function Home()
 	const callbackAudioURL = callbackAudioFilename.replace(/public/, "");
 	
 	setAudioFilename(callbackAudioFilename);
-	//mediaPlayer.current.state = "start-playing";
-	//mediaPlayer.current.state = "init-to-silence";
 
         if (audioContext === null) {
             console.log("Initializing AudioContext");
@@ -377,10 +358,6 @@ export default function Home()
     const playAudioBlobCallback = (callbackBlob) => {
 	console.log("[page.js] playAudioBlobCallback()");
 	
-	//const callbackAudioURL = callbackAudioFilename.replace(/public/, "");
-	
-	//setAudioFilename(callbackAudioFilename);
-
         if (audioContext === null) {
             console.log("Initializing AudioContext");
             setAudioContext(new AudioContext());
@@ -396,10 +373,24 @@ export default function Home()
 
         const updatedMessages = [...messages, userMessage, returnedTopMessage];
         setMessages(updatedMessages);	        
-    }
-;
-    const lang_HowCanIHelp = configOptionsRef.current.interfaceText["_howCanIHelp_"][Lang];
+    };
 
+    // Upgrade to render a loading spinner while waiting for the data ??    
+    if (isLoading) {
+	console.log("Returning isLoading message");
+	//return <p>Loading interface configuration settings ...</p>;
+
+	return (
+	    <main className="flex min-h-screen flex-col items-center justify-center">
+	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
+	        <div className="flex flex-col justify-center items-center">
+		  <ReactLoading type="spinningBubbles" color="lightblue" height={'10%'} width={'10%'} />
+		{/*Loading ...*/}
+		</div>
+	      </div>
+	    </main>
+	);
+    }
     
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
@@ -407,7 +398,7 @@ export default function Home()
 
 	        <div className="flex flex-col justify-center items-center">
 	          <div className="textmessage pb-2" style={{width: interfaceWidth+'px'}} >                  
-	            {lang_HowCanIHelp}
+	            {howCanIHelpText}
 	          </div>	    	    
 
                   <div style={{backgroundColor: '#f4f4f4', padding: '0.5rem 0.5rem 0 0.5rem'}}>
@@ -454,6 +445,7 @@ export default function Home()
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 	            abortControllerRef={abortControllerRef}
+		    updateLangCallback={updateLang}
 		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}
                     updateMessagesCallback={updateMessagesCallback}

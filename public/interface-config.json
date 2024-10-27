@@ -1,0 +1,113 @@
+{
+    "lang"          : "en",
+
+    "params": {
+	"speechToText"  : "fake",
+	"chatLLM"       : "fake",
+	"textToSpeech"  : "fake"	
+    },
+
+    "interfaceText" : {
+	"_howCanIHelp_": {
+	    "en": "How can I help?",
+	    "mi": "Kōrero mai ..."
+	},
+	"_microphoneInstructions_": {
+	    "en": "Press and hold the microphone button to record.",
+	    "mi": "Pātene hopu reo."
+	},
+
+	"_showtext_": {
+	    "en": "Show Text",
+	    "mi": "Whakaatu Kupu"
+	},
+	"_hidetext_": {
+	    "en": "Hide Text",
+	    "mi": "Huna Kupu"
+	},
+	
+	"_statusLabel_": {
+	    "en": "Status",
+	    "mi": "Tūnga" 
+	},
+	"_statusWaiting_": {
+	    "en": "Waiting for audio input ...",
+	    "mi": "E whanga ana ki tō reo ..."
+	},
+	"_statusUnableToRecord_": {
+	    "en": "Unable to record",
+	    "mi": "Kaore e taea te tuhi" 
+	},
+	"_statusRecording_": {
+	    "en": "Recording ...",
+	    "mi": "E hopu ana ..."
+	},
+	"_statusSpeechToTextProcessing_": {
+	    "en": "Text recognition of recorded audio ...",
+	    "mi": "E whakarite ana te kupu kōrero ki te kupu tuhi..."
+	},
+	"_statusSpeechToTextCompleted_": {
+	    "en": "Spoken text recognised",
+	    "mi": "Kua hopu kōrero"
+	},
+	"_textInfoRecognisedTextSpoken_": {
+	    "en": "Recognised spoken text",
+	    "mi": "Ko ngā kōrero kua hopu"
+	},
+	
+	"_statusChatLLMProcessing_": {
+	    "en": "Recognised text being processed by ${selectedChatLLM} ...",
+	    "mi": "E hanga whakaaro ana a ${selectedChatLLM} ..."
+	},
+	"_statusTextToSpeechProcessing_": {
+	    "en": "${selectedChatLLM}'s response being synthesized as audio ...",
+	    "mi": "E whakarite ana te kupu tuhi ki te kupu kōrero ..."
+	},
+	"_statusPlayingSynthesizedResult_": {
+	    "en": "Playing the synthesized audio response ...",
+	    "mi": "E kōrero ana ..."
+	},
+	
+	"_statusChatLLMResponseReceived_": {
+	    "en": "${selectedChatLLM}'s response received",
+	    "mi": "Kua whakahoki kōrero mai a ${selectedChatLLM}"
+	},
+	"_statusChatLLMNoResponseReceived_": {
+	    "en": "No response received from ${selectedChatLLM}",
+	    "mi": "Kāore a ${selectedChatLLM} i whakahoki kōrero mai"
+	},
+	
+	"_statusNetworkError_": {
+	"en": "A network error occured",
+	    "mi": "Kua whati te tūhononga rorohiko"
+	},
+	"_textInfoNetworkError_": {
+	    "en": "A network error occured when trying to process the recognised text",
+	    "mi": "Kua whati te tūhononga rorohiko i a ${selectedChatLLM} e whakaaro ana"
+	},
+        
+	"_statusAudioPlayerPaused_": {
+	    "en": "Paused",
+	    "mi": "E tū ana"
+	},
+	"_statusAudioPlayerPlaying_": {
+	    "en": "Playing",
+	    "mi": "E kōrero ana"
+	},
+	"_statusAudioPlayerStopped_": {
+	    "en": "Stopped playing",
+	    "mi": "Kua mutu te kōrero"
+	},
+	"_statusMicrophoneRecordingStopped_": {
+	    "en": "Stopped recording",
+	    "mi": "Kua mutu te hopu"
+	},
+	
+	
+	"_LLMSays_": {
+	    "en": "${selectedChatLLM} says",
+	    "mi": "ki tā ${selectedChatLLM}"
+	}
+    }
+}
+
