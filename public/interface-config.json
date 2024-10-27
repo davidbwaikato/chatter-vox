@@ -56,11 +56,11 @@
 	},
 	
 	"_statusChatLLMProcessing_": {
-	    "en": "Recognised text being processed by ${selectedChatLLM} ...",
-	    "mi": "E hanga whakaaro ana a ${selectedChatLLM} ..."
+	    "en": "Recognised text being processed by ${chatLLM} ...",
+	    "mi": "E hanga whakaaro ana a ${chatLLM} ..."
 	},
 	"_statusTextToSpeechProcessing_": {
-	    "en": "${selectedChatLLM}'s response being synthesized as audio ...",
+	    "en": "${chatLLM}'s response being synthesized as audio ...",
 	    "mi": "E whakarite ana te kupu tuhi ki te kupu kōrero ..."
 	},
 	"_statusPlayingSynthesizedResult_": {
@@ -69,12 +69,12 @@
 	},
 	
 	"_statusChatLLMResponseReceived_": {
-	    "en": "${selectedChatLLM}'s response received",
-	    "mi": "Kua whakahoki kōrero mai a ${selectedChatLLM}"
+	    "en": "${chatLLM}'s response received",
+	    "mi": "Kua whakahoki kōrero mai a ${chatLLM}"
 	},
 	"_statusChatLLMNoResponseReceived_": {
-	    "en": "No response received from ${selectedChatLLM}",
-	    "mi": "Kāore a ${selectedChatLLM} i whakahoki kōrero mai"
+	    "en": "No response received from ${chatLLM}",
+	    "mi": "Kāore a ${chatLLM} i whakahoki kōrero mai"
 	},
 	
 	"_statusNetworkError_": {
@@ -83,7 +83,7 @@
 	},
 	"_textInfoNetworkError_": {
 	    "en": "A network error occured when trying to process the recognised text",
-	    "mi": "Kua whati te tūhononga rorohiko i a ${selectedChatLLM} e whakaaro ana"
+	    "mi": "Kua whati te tūhononga rorohiko i a ${chatLLM} e whakaaro ana"
 	},
         
 	"_statusAudioPlayerPaused_": {
@@ -105,8 +105,8 @@
 	
 	
 	"_LLMSays_": {
-	    "en": "${selectedChatLLM} says",
-	    "mi": "ki tā ${selectedChatLLM}"
+	    "en": "${chatLLM} says",
+	    "mi": "ki tā ${chatLLM}"
 	}
     }
 }

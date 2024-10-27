@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 
 import { interfaceTextResolver } from "@/utils/interfaceText";
 
-import { blobToBase64 } from "@/utils/blobToBase64"; // **** Only used in one place (here) => merge and remove file?
+//import { blobToBase64 } from "@/utils/blobToBase64"; // **** Only used in one place (here) => merge and remove file?
 import { getPeakLevel } from "@/utils/createMediaStream";
 
 export const useRecordVoice = (props) => {
@@ -25,7 +25,19 @@ export const useRecordVoice = (props) => {
     const audioContext = useRef(null);
     const sourceNode   = useRef(null);
     const analyzerNode = useRef(null);
-
+    
+    const blobToBase64 = (blob,abortController, callback) => {
+	console.log("blobToBase64()", blob);
+	
+	const reader = new FileReader();
+	reader.onload = function () {
+	    const type = blob.type;
+	    const base64data = reader?.result?.split(",")[1];
+	    callback(blob,base64data,type,abortController);
+	};
+	reader.readAsDataURL(blob);
+    };
+    
     // OpenAI supported audio formats (as of 28 April 2024):
     //   ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']"
     //
@@ -73,9 +85,6 @@ export const useRecordVoice = (props) => {
 		props.updateStatusCallback("_statusRecording_");
 		
 		isRecording.current = true;
-
-
-
 
 		mediaRecorder.onstart = () => {
 		    console.log("mediaRecorder.onstart()");
@@ -168,47 +177,6 @@ export const useRecordVoice = (props) => {
             setRecording(false);
 	}
     };
-
-    // StackOverflow posting on how to interrupt a fetch()    
-    //   https://stackoverflow.com/questions/31061838/how-do-i-cancel-an-http-fetch-request
-    /*
-
-
- // Create an instance.
-    const controller = new AbortController()
-    const signal = controller.signal
-
-    //
-    // // Register a listenr.
-    // signal.addEventListener("abort", () => {
-    //     console.log("aborted!")
-    // })
-    
-
-
-    function beginFetching() {
-        console.log('Now fetching');
-        var urlToFetch = "https://httpbin.org/delay/3";
-
-        fetch(urlToFetch, {
-                method: 'get',
-                signal: signal,
-            })
-            .then(function(response) {
-                console.log(`Fetch complete. (Not aborted)`);
-            }).catch(function(err) {
-                console.error(` Err: ${err}`);
-            });
-    }
-
-
-    function abortFetching() {
-        console.log('Now aborting');
-        // Abort.
-        controller.abort()
-    }
-    */
-    
 
     const getSynthesizedSpeech = async (text) => {
 	//props.updateStatusCallback(props.configOptionsRef.current.chatLLM + "'s response being synthesized as audio ...");
@@ -423,6 +391,8 @@ export const useRecordVoice = (props) => {
     }
     */
 
+    // **** XXXX
+    /*
   const blobToBase64Promise = blob => {
       const reader = new FileReader();
       reader.readAsDataURL(blob);
@@ -432,6 +402,7 @@ export const useRecordVoice = (props) => {
 	  };
       });
   };
+    */
     
     
   const initializeMediaRecorder = (initStream) => {

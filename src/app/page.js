@@ -1,8 +1,5 @@
 "use client"
 
-//const fs = require('fs');
-//const path = require('path');
-
 import React, { useState, useEffect, useRef, useCallback  } from 'react';
 
 import ReactLoading from 'react-loading';
@@ -16,10 +13,6 @@ import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";
 import { MediaPlayer, AudioSpectrumVisualizer } from "@/app/components/AudioSpectrumVisualizer";
 
 import AbortController from "abort-controller";
-
-//const defaultChatLLM  = "OpenAI";
-// //const defaultChatLLM  = "Claude";
-
 
 const InterfaceModeEnum = Object.freeze({"inactive":1, "recording": 2, "processing":3, "playing":4, "paused":5 });
 
@@ -87,18 +80,27 @@ export default function Home()
 		const queryParams = new URLSearchParams(window.location.search);
 		const lang_param = queryParams.get('lang'); 
 		
-		if (lang_param) {
-		    
+		if (lang_param) {		    
 		    if (lang_param != data.lang) {
 			console.log("Changing display language based on URL param: " + lang_param);
 			data.lang = lang_param;
 		    }
 		}
+
+		// Check for any query params of the form params.XXX
+		// => use to override value in data
+		for (const full_param of queryParams.keys()) {		    
+		    const match = full_param.match(/^params\.(\w+)$/);		    
+		    if (match) {
+			const param_name = match[1];
+			const param_val  = queryParams.get(full_param);
+
+			data.params[param_name] = param_val;
+		    }
+		}
 		
 		setConfigOptions(data);
 		configOptionsRef.current = data;
-		//setLang(data.lang);
-		//setHowCanIHelpText(interfaceTextResolver(configOptionsRef.current,"_howCanIHelp_",data.lang));
 				   
 		console.log("ConfigOptios set: ", data);		
 	    }
@@ -143,43 +145,31 @@ export default function Home()
 	}
 	
 	if (abortControllerRef.current == null) {
+	    // StackOverflow posting on how to interrupt a fetch()    
+	    //   https://stackoverflow.com/questions/31061838/how-do-i-cancel-an-http-fetch-request
+	    
 	    abortControllerRef.current = new AbortController();
 	}
 	
     }, []);
 
-/*
-    useEffect(() => {
-	console.log("[page.js] Init useEffect() check URLSearchParam");
-	const queryParams = new URLSearchParams(window.location.search);
-	const lang_param = queryParams.get('lang'); 
-
-	if (lang_param) {
-	    
-	    if (lang_param != Lang) {
-		//const NewConfigOptions = {...ConfigOptions, "lang": lang_param}
-
-		// //NewConfigOptions["lang"] = lang_param;
-		console.log("URL lang param: " + lang_param);
-		setLang(lang_param);
-		//setConfigOptions(NewConfigOptions);
-	    }
-	}
-    }, []);
-*/
-    
-    // **** XXXX
     useEffect(() => {
 	console.log("[page.js] useEffect() [ConfigOptions] has changed: ");
 	if (ConfigOptions != null) {
+	    // **** XXXX
+	    // For now, always assume lang has change
+	    // if ((Lang == "") || (Lang != ConfigOptions.lang)) {
 	    setLang(ConfigOptions.lang);
-	    setHowCanIHelpText(interfaceTextResolver(ConfigOptions,"_howCanIHelp_",ConfigOptions.lang));	    
+	    setHowCanIHelpText(interfaceTextResolver(ConfigOptions,"_howCanIHelp_",ConfigOptions.lang));
+	    //}
+
 	}
     }, [ConfigOptions]);
 
     useEffect(() => {
 	console.log("[page.js] useEffect() [Lang] has changed: " + Lang);
 
+	// **** XXXX
 	//const NewConfigOptions = {...DefaultConfigOptions, "lang": Lang}
 	//configOptionsRef.current = NewConfigOptions
 	//setConfigOptions(NewConfigOptions);
@@ -188,7 +178,7 @@ export default function Home()
 	    //console.log("**** setting configOptionsRef.current.lang = " + configOptionsRef.current.lang + ", Lang="+Lang);
 	    
 	    configOptionsRef.current.lang = Lang;	    
-	    updateStatus("_statusWaiting_");
+	    //updateStatus("_statusWaiting_");
 	}
 	
     }, [Lang]);
@@ -213,15 +203,11 @@ export default function Home()
 
     
     useEffect(() => {
-	// **** XXXX
 	if (isLoading) { return }
-	// Or consider testing for 'ref'
 	
         if (interfaceMode === InterfaceModeEnum.inactive) {
             setMicrophoneMode(MicrophoneModeEnum.inactive);
-	    //if (microphoneImperativeRef != null) {
-		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
-	    //}
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }
         else if (interfaceMode === InterfaceModeEnum.recording) {
@@ -229,24 +215,18 @@ export default function Home()
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
         }            
         else if (interfaceMode === InterfaceModeEnum.processing) {
-	    //if (microphoneImperativeRef != null) {
-		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //}
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
 	    mediaPlayer.current.state = "processing";
 	    
         }            
         else if (interfaceMode === InterfaceModeEnum.playing) {
             setMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //if (microphoneImperativeRef != null) {	    
-		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //}
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
             setAudioPlayerMode(AudioPlayerModeEnum.playing);
         }
         else if (interfaceMode === InterfaceModeEnum.paused) {
             setMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //if (microphoneImperativeRef != null) {
-		microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
-	    //}
+	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
             setAudioPlayerMode(AudioPlayerModeEnum.paused);
         }        
     }, [interfaceMode]);
@@ -363,7 +343,6 @@ export default function Home()
             setAudioContext(new AudioContext());
         }
 	setBlob(callbackBlob);
-
     };
 
     const updateMessagesCallback = (returnedMessagePair) => {
@@ -375,9 +354,8 @@ export default function Home()
         setMessages(updatedMessages);	        
     };
 
-    // Upgrade to render a loading spinner while waiting for the data ??    
     if (isLoading) {
-	console.log("Returning isLoading message");
+	//console.log("Returning isLoading message");
 	//return <p>Loading interface configuration settings ...</p>;
 
 	return (

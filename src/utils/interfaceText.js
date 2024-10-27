@@ -44,8 +44,13 @@ const interfaceTextResolver = (configOptions,textFragmentKey,lang) => {
     
     //console.log(`Looking up '${textFragmentKey}'[${lang}] in: "`, interfaceText);
     const text_frag_lang_value = interfaceText[textFragmentKey][lang];
+
+    const params = {};
+    for (const key in configOptions.params) {
+	params[key] = configOptions.params[key];
+    }
     
-    const evaluated_text = evaluateTemplateString(text_frag_lang_value, { selectedChatLLM });
+    const evaluated_text = evaluateTemplateString(text_frag_lang_value,params);
 
     return evaluated_text;
 
