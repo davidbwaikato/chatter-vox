@@ -88,9 +88,9 @@
 	    "mi": "Kua whati te tūhononga rorohiko i a ${chatLLM} e whakaaro ana"
 	},
 
-        "_textUIConfigurationNotSupported_": {
-	    "en": "Interface configuration instructions are not currently supported.",
-	    "mi": "Ko nga tohutohu whirihoranga atanga kaore i te tautokohia i tenei wa."
+        "_statusUITranslationFailed_": {	
+	    "en": "Failed to retrieve translated interface text",
+	    "mi": "I rahua te tiki i nga kuputuhi atanga kua whakamaoritia"
 	},
 	
 	"_statusAudioPlayerPaused_": {

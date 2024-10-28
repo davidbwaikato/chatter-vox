@@ -35,10 +35,6 @@ export default function Home()
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
     const [audioContext, setAudioContext] = useState(null); // <AudioContext>
 
-    //const [messages, setMessages] = useState([
-    //    { role: "system",    content: "You are a helpful assistant" },
-    //    { role: "assistant", content: "How can I help you today?" }
-    //]);
     const [messages, setMessages] = useState(null);
 
     const [mediaPlayerWidth,     setMediaPlayerWidth    ] = useState(400);
@@ -156,6 +152,10 @@ export default function Home()
 
     useEffect(() => {
 	console.log("[page.js] useEffect() [ConfigOptions] has changed: ");
+	console.log("**** ConfigOptions: ", ConfigOptions);
+	
+	configOptionsRef.current = ConfigOptions;
+	
 	if (ConfigOptions != null) {
 	    // **** XXXX
 	    // For now, always assume lang has change
@@ -233,25 +233,30 @@ export default function Home()
 	messagesRef.current = messages;
     }, [messages]);
 
-    const updateLang = (newLang,newInterfaceText) => {
-
-	/*
-	let newConfigOptions = {...ConfigOptions};
-	newConfigOptions.lang = newLang;
-	if (optNewInterfaceText != null) {
-	    newConfigOptions.interfaceText = {...optNewInterfaceText};
-	}
-	//const newConfigOptions = {...ConfigOptions, lang: newLang};
-	*/
-
-	// **** Also need to update interfaceText.interfaceLangs
+    const updateInterfaceTextLang = (newLang,newInterfaceText) => {
+	//console.log("**** !!!! updateInterfaceTextLang() newInterfaceText: ",newInterfaceText);
 	
-	const newConfigOptions = {...ConfigOptions, lang: newLang};
-	//const newConfigOptions = {...ConfigOptions, lang: newLang, interfaceText: {...newInterfaceText}};
+	const interfaceLangs = [...configOptionsRef.current.interfaceLangs, newLang];
+	
+	const newConfigOptions = {
+	    ...ConfigOptions,
+	    lang: newLang,
+	    interfaceLangs: [...interfaceLangs],
+	    interfaceText: {...newInterfaceText}
+	};
 	setConfigOptions(newConfigOptions);
-	configOptionsRef.current = newConfigOptions;
     };
+
+    
+    const updateLang = (changeToLang) => {
+	//console.log("**** !!!! updateLang() changeToLang = " + changeToLang);
 	
+	const newConfigOptions = {...ConfigOptions, lang: changeToLang};
+		
+	setConfigOptions(newConfigOptions);
+    };
+    
+    
     const updateStatus = (text_marker) => {
 	// This function needs to work with the configOptionsRef version of language
 	// This is because calling the method sometimes occurs in from a callback function
@@ -260,7 +265,7 @@ export default function Home()
 	
 	const Lang_ref = configOptionsRef.current.lang;
 	
-	console.log("*** updateStatus(), (dynamic look) Lang_ref = " + Lang_ref + ", text_marker = " + text_marker);	
+	//console.log("*** updateStatus(), (dynamic look) Lang_ref = " + Lang_ref + ", text_marker = " + text_marker);	
 	let lang_text = text_marker;
 	
 	if (text_marker in configOptionsRef.current.interfaceText) {
@@ -300,7 +305,7 @@ export default function Home()
     };
 
     const handleAudioPlay = () => {
-        console.log("handleAudioPlay()");
+        //console.log("handleAudioPlay()");
         if (mediaPlayer.current.state !== "playing") {
             mediaPlayer.current.state = "playing";
 	    updateStatus("_statusAudioPlayerPlaying_");
@@ -312,8 +317,8 @@ export default function Home()
     };
 
     const handleAudioStop = () => {
-        console.log("handleAudioStop()");
-	console.log("**** mediaPlayer.current.state = " + mediaPlayer.current.state);
+        //console.log("handleAudioStop()");
+	//console.log("**** mediaPlayer.current.state = " + mediaPlayer.current.state);
 	
         if ((mediaPlayer.current.state === "playing") || (mediaPlayer.current.state === "paused")) {
             mediaPlayer.current.state = "inactive";
@@ -358,38 +363,26 @@ export default function Home()
 	setBlob(callbackBlob);
     };
 
-    /*
-    const updateMessagesCallback = (returnedMessagePair) => {
-        console.log("returnedMessagePair = " + JSON.stringify(returnedMessagePair));
-        const userMessage        = returnedMessagePair.userMessage;
-        const returnedTopMessage = returnedMessagePair.returnedTopMessage;
-
-        const updatedMessages = [...messages, userMessage, returnedTopMessage];
-        setMessages(updatedMessages);	        
-    };
-*/
     const updateMessagesCallback = (updatedMessages) => {
 
-	// For backwards compatability reasons with debugging output
-	// ... form pair of last two items in the messages array
 	
 	const updated_messages_len = updatedMessages.length;
 	
-	const returned_message_pair = {
-	    userMessage: updatedMessages[updated_messages_len-2],
-	    returnedTopMessage: updatedMessages[updated_messages_len-1]
-	};
+	// For backwards compatability reasons with debugging output
+	// ... form pair of last two items in the messages array
+
+	//const returned_message_pair = {
+	//    userMessage: updatedMessages[updated_messages_len-2],
+	//    returnedTopMessage: updatedMessages[updated_messages_len-1]
+	//};
 	
-        console.log("**** Returned message pair: ", returned_message_pair);
+        //console.log("**** Returned message pair: ", returned_message_pair);
 
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };
 
     
     if (isLoading) {
-	//console.log("Returning isLoading message");
-	//return <p>Loading interface configuration settings ...</p>;
-
 	return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
 	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
@@ -455,6 +448,7 @@ export default function Home()
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 	            abortControllerRef={abortControllerRef}
+		    updateInterfaceTextLangCallback={updateInterfaceTextLang}
 		    updateLangCallback={updateLang}
 		    updateStatusCallback={updateStatus}
 	            playAudioBlobCallback={playAudioBlobCallback}

@@ -26,7 +26,7 @@ export const useRecordVoice = (props) => {
     const analyzerNode = useRef(null);
     
     const blobToBase64 = (blob,abortController, callback) => {
-	console.log("blobToBase64()", blob);
+	//console.log("**** blobToBase64()", blob);
 	
 	const reader = new FileReader();
 	reader.onload = function () {
@@ -139,23 +139,6 @@ export const useRecordVoice = (props) => {
 		    console.log("Converting chunks to blob:");
 		    console.log(audioBlob);
 		    blobToBase64(audioBlob,abortController, getText);
-
-		    // ****
-		    /*
-		    const processAudioBlob = async () => {
-			const audioBlobBase64 = await blobToBase64Promise(audioBlob);
-			await getText(audioBlob,audioBlobBase64,audioMimeType);
-			
-		    };
-		    processAudioBlob();
-		    */
-		    
-		    /*
-		    blobToBase64Promise(audioBlob).then(audioBlobBase64 => {
-			getText(audioBlob,audioBlobBase64,audioMimeType);
-		    })
-		    */
-	      
 		};
 		
 		
@@ -237,6 +220,7 @@ export const useRecordVoice = (props) => {
 	// to go ahead and get the translated user interface language, indepedent
 	// of whether or not the user stops their actually asked question/entered prompt
 
+	console.log(`Generate new interface for '${newLang}'`);
 	
 	const response = await fetch("/api/chatLLM", {
 	    method: "POST",
@@ -259,25 +243,13 @@ export const useRecordVoice = (props) => {
             });	    
 	
 	if (response != null) {
-	    //const result_messages = response.result;
-	    //const result_messages_len = result_messages.length;
-	    
-	    //const returned_top_message = result_messages[result_messages_len-1];
-	    
-	    //props.configOptionsRef.current.interfaceText = response;
+	    const newInterfaceText = JSON.parse(response.content);
 
-	    const newInterfaceText = response;
-	    
-	    props.configOptionsRef.current.lang = newLang; // do I need this ????
-	    props.updateLangCallback(newLang,newInterfaceText);
+	    props.updateInterfaceTextLangCallback(newLang,newInterfaceText);
 	}
 	else {
-	    console.error("Failed to retrieve new interface text from LLM");
-	    
-	    //const lang = props.configOptionsRef.current.lang;
-	    //const lang_ti_network_error = interfaceTextResolver(props.configOptionsRef.current,"_textInfoNetworkError_",lang);
-	    //setText(lang_ti_network_error);
-	    //props.updateStatusCallback("_statusNetworkError_");
+	    console.error("Failed to retrieve new interface text from OpenAI");	    
+	    props.updateStatusCallback("_statusUITranslationFailed_");
 	}
     };
 
@@ -311,9 +283,7 @@ export const useRecordVoice = (props) => {
 		body: JSON.stringify({
 		    configOptions: props.configOptionsRef.current,
 		    mode: "ProcessUserPrompt",		    
-		    //messages: JSON.parse(props.messages),
 		    messages: props.messagesRef.current,
-		    // //messages: messages,
 		    promptText: promptText
 		}),
 	    }).then((res) => {
@@ -340,9 +310,9 @@ export const useRecordVoice = (props) => {
 		    if (returned_lang != lang) {
 			const config_options_ref = props.configOptionsRef.current;
 			
-			if (returned_lang in config_options_ref.interfaceLangs) {
-			    config_options_ref.current.lang = returned_lang;
-			    props.updateLangCallback(returned_lang,config_options_ref.interfaceText);
+			if (config_options_ref.interfaceLangs.includes(returned_lang)) {
+			    config_options_ref.lang = returned_lang;  // potential to hasten use of changed language
+			    props.updateLangCallback(returned_lang);
 			}
 			else {
 			    // Asynchronously get new language text
@@ -358,7 +328,6 @@ export const useRecordVoice = (props) => {
 		    if (is_a_configuration_instruction) {
 			const lang_not_supported = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationNotSupported_",lang);
 			returned_top_message.content = lang_not_supported;
-			//result_messages[result_messages_len-1].content = lang_not_supported;
 		    }
 		}
 
@@ -366,7 +335,9 @@ export const useRecordVoice = (props) => {
 
 		props.updateStatusCallback("_statusChatLLMResponseReceived_");		
 		props.updateMessagesCallback(result_messages); 
-		
+
+		// **** Change this so _LLMSays_ is handled separately, so can change when language does
+		// **** !!!!
 		const lang_llm_says = interfaceTextResolver(props.configOptionsRef.current,"_LLMSays_",lang);
 		setText(lang_llm_says + ":\n" + chatResponseText);
 		
