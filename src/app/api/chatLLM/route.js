@@ -179,6 +179,7 @@ async function postGenerateLanguageInterfaceOpenAI(body) {
         
     console.log("[ChatLLM route.js, OpenAI] GenerateLanguageInterface");
 
+    /*
     const InterfaceTextResponse = z.object({
 	markdownResponse: z.string(),
 	language: z.string(),
@@ -198,6 +199,7 @@ async function postGenerateLanguageInterfaceOpenAI(body) {
     );
 
     const genericSchema = z.object();
+    */
     
     /*
     const generateNewLanguageMessages = [
@@ -259,32 +261,10 @@ async function postGenerateLanguageInterfaceOpenAI(body) {
 	    response_format: { type: "json_object" }
 	});
 
-	console.log("**** !!!! completion message = ", completion.choices[0].message);
-	//const response_data = completion.choices[0].message.parsed;
-	//const response_data = JSON.parse(completion.choices[0].message);
+	//console.log("**** !!!! completion message = ", completion.choices[0].message);
 	const response_data = completion.choices[0].message;
 
 	return NextResponse.json(response_data);
-
-	/*
-	const returnedTopMessage_json = completion.choices[0].message.parsed;
-	console.log("**** returnedTopMessage_json = ", returnedTopMessage_json);
-	console.log("****     choice[0] = ", completion.choices[0]);
-	
-	const returnedTopMessage =  {
-	    role: 'assistant',
-	    content: returnedTopMessage_json,
-	    refusal: completion.choices[0].message.refusal 	    
-	};
-
-	//const updatedMessagesWithTopAnswer = [...generateNewLanguageMessages, returnedTopMessage ];
-
-	//const response_data = { result: updatedMessagesWithTopAnswer };
-	const response_data = { result: returnedTopMessage };
-	
-	//console.log("**** Response data:", response_data);	
-	return NextResponse.json(response_data);	
-*/
     }
     catch (error) {
 	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);	
@@ -292,6 +272,59 @@ async function postGenerateLanguageInterfaceOpenAI(body) {
     }    
 }
 
+
+
+async function postUpdateConfigSettingsOpenAI(body) {
+        
+    console.log("[ChatLLM route.js, OpenAI] UpdateConfigSettings");
+
+    // Expressed as ... prompt says how to change the config file
+    
+    // You will be provided the current JSON configuration file, along with a prompt describing how the user wants the configuration file to be changed.  Your task is to change the JSON configuration as specified by the prompt, and then return the updated JSON file as your answer.
+	
+    const updateConfigSettingsMessages = [
+	{ role: "system", content:
+	  `You are an assistant that specializes in updating the JSON configuration file that is used to control the web-based interface called ChatterVox.
+           You will be provided the current JSON configuration file, along with a prompt describing how the user wants the web-based interface to be updated, as represented through the settings in the JSON configuration file.  Your task is to change the JSON configuration in response to the user's provided instruction, and then return the updated JSON file as your answer.
+           The JSON configuration file is hierarchially organised.  The top-level fields is has are: 'params', 'lang', 'interfaceLangs', 'interfaceText', 'cssParams' and 'cssSettings'. 
+           'lang' specifies the 2 letter code version of ISO 3166 that controls the language the interface is displayed in. 
+           'interfaceText' is a nested-struture that contains all the text language fragments used in the interface.  A text language fragment islooked up by specifying a 'key' which controls which text-fragement is to be selecting, in combination with 'lang' which controls the language of the text-fragment that is accessed.
+           'interfaceLangs' is an array of ISO 3166 values (2 letter codes), that represents the languages that are available through 'interfaceText'.
+           'cssParams' and 'cssSettings' specify CSS values that get used in the web interface. 'cssParams' provide global CSS settings. 'cssSettings' provides settings for more specific elements.`
+	}
+    ];
+    const configOptions = body.configOptions;
+    const promptText = body.promptText;
+
+    updateConfigSettingsMessages.push({
+	role: "user", content:
+	"Here is the user's instructions on how they want the web-based interface to be updated:\n"
+	    +promptText + "\n\n"
+	    +"Here is the current JSON configuration file:\n"
+	    +JSON.stringify(configOptions)+"\n\n"
+	    +"Based on the user's instruction, update the JSON configuration file"
+    });
+
+    console.log("**** updateConfigSettingsMessages: ", updateConfigSettingsMessages);
+    	
+    try {
+	//const completion = await openai.beta.chat.completions.parse({
+	const completion = await openai.chat.completions.create({	    
+	    model: "gpt-4o",
+	    messages: updateConfigSettingsMessages,
+	    temperature: 0,
+	    response_format: { type: "json_object" }
+	});
+
+	const response_data = completion.choices[0].message;
+
+	return NextResponse.json(response_data);
+    }
+    catch (error) {
+	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);	
+	return NextResponse.error();
+    }    
+}
 
 
 
@@ -313,10 +346,16 @@ export async function POST(req)
     
     if (body.mode == "GenerateLanguageInterface") {
 	// Get this done with OpenAI's ChatGPT for now
-	//await  postGenerateLanguageInterfaceOpenAI(body); // **** is this more correctly done with an await ???? 
-	returned_response = postGenerateLanguageInterfaceOpenAI(body);
-	
+	//await  postGenerateLanguageInterfaceOpenAI(body); // **** is this more correctly done with an await ????
+	// If so, then updated other calls in this file, and the other route.js
+	returned_response = postGenerateLanguageInterfaceOpenAI(body);	
     }
+    else if (body.mode == "UpdateConfigSettings") {
+	// Get this done with OpenAI's ChatGPT for now
+	//await  postGenerateLanguageInterfaceOpenAI(body); // **** is this more correctly done with an await ????
+	// If so, then updated other calls in this file, and the other route.js
+	returned_response = postUpdateConfigSettingsOpenAI(body);	
+    }    
     else if (body.mode == "ProcessUserPrompt") {
 	const post_lookup_fn = PostLookup[configOptions.params.chatLLM];
 

@@ -262,6 +262,12 @@ export default function Home()
 	messagesRef.current = messages;
     }, [messages]);
 
+    const updateConfigOptions = (newConfigOptions) => {
+	//console.log("**** !!!! updateConfigOptions() newConfigOptions: ",newConfigOptions);
+	
+	setConfigOptions(newConfigOptions);
+    };
+
     const updateInterfaceTextLang = (newLang,newInterfaceText) => {
 	//console.log("**** !!!! updateInterfaceTextLang() newInterfaceText: ",newInterfaceText);
 	
@@ -276,7 +282,6 @@ export default function Home()
 	setConfigOptions(newConfigOptions);
     };
 
-    
     const updateLang = (changeToLang) => {
 	//console.log("**** !!!! updateLang() changeToLang = " + changeToLang);
 	
@@ -478,6 +483,7 @@ export default function Home()
 	            configOptionsRef={configOptionsRef}
                     messagesRef={messagesRef}
 	            abortControllerRef={abortControllerRef}
+	            updateConfigOptionsCallback={updateConfigOptions}
 		    updateInterfaceTextLangCallback={updateInterfaceTextLang}
 		    updateLangCallback={updateLang}
 		    updateStatusCallback={updateStatus}

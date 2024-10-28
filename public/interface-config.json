@@ -92,6 +92,19 @@
 	    "en": "Failed to retrieve translated interface text",
 	    "mi": "I rahua te tiki i nga kuputuhi atanga kua whakamaoritia"
 	},
+        "_statusUIConfigUpdateFailed_": {	
+	    "en": "Failed to update interface configuration",
+	    "mi": "I rahua te whakahou i te whirihoranga atanga"
+	},
+
+	"_textUIConfigurationNotSupported_": {
+	    "en": "User-prompted changes to the interface not currently supported.",
+	    "mi": "Ko nga huringa aa-kaiwhakamahi ki te atanga kaore i te tautokohia."
+	},
+	"_textUIConfigurationBeingUpdated_": {
+	    "en": "User interface being updated.",
+	    "mi": "Kei te whakahouhia te atanga kaiwhakamahi."
+	},
 	
 	"_statusAudioPlayerPaused_": {
 	    "en": "Paused",

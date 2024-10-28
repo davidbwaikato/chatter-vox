@@ -217,7 +217,7 @@ export const useRecordVoice = (props) => {
     
     const getNewInterfaceLang = async (newLang) => {
 	// No need for abortInterface on this one, as we want the /chatLLM fetch() here
-	// to go ahead and get the translated user interface language, indepedent
+	// to go ahead and get the translated user interface language, independent
 	// of whether or not the user stops their actually asked question/entered prompt
 
 	console.log(`Generate new interface for '${newLang}'`);
@@ -253,6 +253,43 @@ export const useRecordVoice = (props) => {
 	}
     };
 
+    const updateConfigOptionsWithLLM = async (promptText, abortController) => {
+
+	console.log("updateConfigOptionsWithLLM");
+	
+	const response = await fetch("/api/chatLLM", {
+	    method: "POST",
+	    signal: abortController.signal,
+	    headers: {
+		"Content-Type": "application/json",
+	    },
+	    body: JSON.stringify({
+		configOptions: props.configOptionsRef.current,
+		mode: "UpdateConfigSettings",
+		promptText: promptText
+	    }),
+	    }).then((res) => {
+		let json_str = null;
+		if (res.status == 200) {
+		    json_str = res.json();
+		}
+		return json_str;
+	    }).catch(function(err) {
+		console.error(`updateConfigOptionsWithLLM(), fetch(): ${err}`);
+            });	    
+	
+	if (response != null) {
+	    const newConfigOptions = JSON.parse(response.content);
+	    props.updateConfigOptionsCallback(newConfigOptions);
+	}
+	else {
+	    console.error("Failed to retrieve new JSON ConfigOptions from OpenAI");	    
+	    props.updateStatusCallback("_statusUIConfigUpdateFailed_");
+	}
+    };
+
+
+    
     const getPromptResponse = async (promptText, abortController) => {
 	props.updateStatusCallback("_statusChatLLMProcessing_");
 		    
@@ -326,8 +363,15 @@ export const useRecordVoice = (props) => {
 		if ('configurationInstruction' in returned_top_message) {
 		    const is_a_configuration_instruction = returned_top_message.configurationInstruction;
 		    if (is_a_configuration_instruction) {
-			const lang_not_supported = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationNotSupported_",lang);
-			returned_top_message.content = lang_not_supported;
+			// allow this to go ahead async ???
+			updateConfigOptionsWithLLM(promptText,abortController);
+			
+			const lang_config_being_updated = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationBeingUpdated_",lang);
+			returned_top_message.content = lang_config_being_updated;
+			
+
+			//const lang_config_change_not_supported = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationNotSupported_",lang);
+			//returned_top_message.content = lang_config_change_not_supported;
 		    }
 		}
 
