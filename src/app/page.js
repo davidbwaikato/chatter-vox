@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback  } from 'react';
 
 import ReactLoading from 'react-loading';
  
-import { interfaceTextResolver } from "@/utils/interfaceText";
+import { interfaceTextResolver } from "@/utils/configOptionsResolver";
 
 import { MicrophoneModeEnum,  Microphone  } from "@/app/components/Microphone";
 import { AudioPlayerModeEnum, AudioPlayer } from "@/app/components/AudioPlayer";

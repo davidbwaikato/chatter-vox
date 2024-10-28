@@ -37,7 +37,8 @@ function evaluateTemplateString(templateStr, context) {
 
 // Output: "Recognised text being processed by OpenAI ..."
 
-const selectedChatLLM = "OpenAI";
+// ****
+//const selectedChatLLM = "OpenAI";
 
 const interfaceTextResolver = (configOptions,textFragmentKey,lang) => {
     const interfaceText = configOptions.interfaceText;
@@ -56,4 +57,21 @@ const interfaceTextResolver = (configOptions,textFragmentKey,lang) => {
 
 };
 
-export { interfaceTextResolver };
+const cssSettingResolver = (configOptions,cssKey) => {
+    const cssSettings = configOptions.cssSettings;
+    
+    //console.log(`cssSettingResolver() Looking up '${cssKey}' in: "`, cssSettings);
+    const css_value = cssSettings[cssKey];
+
+    const params = {};
+    for (const key in configOptions.cssParams) {
+	params[key] = configOptions.cssParams[key];
+    }
+
+    //console.log(`Resolving css_value = ${css_value} with params: ", params`);
+    const evaluated_text = evaluateTemplateString(css_value,params);
+
+    return evaluated_text;    
+}
+    
+export { interfaceTextResolver, cssSettingResolver };

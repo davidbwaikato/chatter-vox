@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 
-import { interfaceTextResolver } from "@/utils/interfaceText";
+import { cssSettingResolver } from "@/utils/configOptionsResolver";
 
 import { useRecordVoice } from "@/hooks/useRecordVoice";
 import { IconMicrophone } from "@/app/components/IconMicrophone";
@@ -53,28 +53,40 @@ const Microphone = forwardRef((props,ref) => {
 	}
     };
 
-    
+    // For (historical) reference ...
     // atea-blue: #176593
-    // rgb(23, 101, 147);
-    // hsl(200, 80%, 46%)
+    //   rgb(23, 101, 147);
+    //   hsl(200, 80%, 46%)
     
     const micBackgroundColor = () => {
+	let return_val = null;
+
+	const configOptions = props.configOptionsRef.current;
+	
 	if (microphoneMode == MicrophoneModeEnum.disabled) {
-	    return 'rgb(200,200,200)'; // grey for disabled
+	    // Originally set to be grey [rgb(200,200,200)] for disabled
+	    return_val = cssSettingResolver(configOptions,"micBackgroundDisabledColor");
+	    //return 'rgb(200,200,200)'; // grey for disabled
 	}	
 	else if (isMouseDown) {
-	    return 'rgb(230,10,10)'; // red for record!
+	    // Originally set to be red [rgb(230,10,10)] for record! 
+	    return_val = cssSettingResolver(configOptions,"micBackgroundRecordColor");
+	    //return 'rgb(230,10,10)'; // red for record!
 	}
 	else {
 	    if (isHover) {
-		return 'hsl(195, 53%, 84%)' // make it even lighter-blue
-		//return 'hsl(200, 80%, 51%)' // make it even lighter atea-blue
+		// Originally set to be a lighter-blue through HSL [hsl(195, 53%, 85%)]
+		return_val = cssSettingResolver(configOptions,"micBackgroundHoverColor");
+		//return 'hsl(195, 53%, 85%)' // make it even lighter-blue
 	    }
 	    else {
-		return 'hsl(195, 53%, 79%)' // lightblue
-		//return 'hsl(200, 80%, 46%)' // atea-blue
+		// Originally set to be 'lightblue' [hsl(195, 53%, 80%)]
+		return_val = cssSettingResolver(configOptions,"micBackgroundColor");
+		//return 'hsl(195, 53%, 80%)' // lightblue
 	    }
 	}
+
+	return return_val;
     };
     
     const containerStyle = {
@@ -189,6 +201,7 @@ const Microphone = forwardRef((props,ref) => {
         
       </div>
     );
+    
     // Some alternative (smaller) potentially useful UTF glyphs for use above
     //   ▿ ▹
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 
-import { interfaceTextResolver } from "@/utils/interfaceText";
+import { interfaceTextResolver } from "@/utils/configOptionsResolver";
 
 import { getPeakLevel } from "@/utils/createMediaStream";
 

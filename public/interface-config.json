@@ -1,11 +1,11 @@
 {
-    "lang"          : "en",
-
     "params": {
 	"speechToText"  : "OpenAI",
 	"chatLLM"       : "OpenAI",
-	"textToSpeech"  : "OpenAI"	
+	"textToSpeech"  : "OpenAI"
     },
+
+    "lang"          : "en",
 
     "interfaceLangs": [ "en", "mi" ],
     
@@ -115,6 +115,20 @@
 	    "en": "${chatLLM} says",
 	    "mi": "ki tā ${chatLLM}"
 	}
+    },
+
+    "cssParams": {
+	"themeForegroundColor"       : "hsl(195, 53%, 80%)",
+	"themeForegroundHoverColor"  : "hsl(195, 53%, 85%)",	
+	"themeBackgroundColor"       : "white",
+	"themeDisabledColor"         : "rgb(200,200,200)"
+    },
+    
+    "cssSettings": {
+	"micBackgroundColor"         : "${themeForegroundColor}",
+	"micBackgroundHoverColor"    : "${themeForegroundHoverColor}",
+	"micBackgroundRecordColor"   : "rgb(230,10,10)",
+	"micBackgroundDisabledColor" : "${themeDisabledColor}"
     }
 }
 
