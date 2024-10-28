@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback  } from 'react';
 
 import ReactLoading from 'react-loading';
  
-
 import { interfaceTextResolver } from "@/utils/interfaceText";
 
 import { MicrophoneModeEnum,  Microphone  } from "@/app/components/Microphone";
@@ -62,35 +61,62 @@ export default function Home()
 
 	console.log("[page.js] Init useEffect() loading Interface JSON Config with fetch() as side-effect");
 	
-	async function fetchConfigData() {
+	async function fetchConfigData(configURL) {
 	    try {
+
+		const queryURLParams = new URLSearchParams(window.location.search);
+
+		let data = null;
+		
+		const reset = queryURLParams.get('reset');
+		if (reset != null) {
+		    // Just its existence is enough to trigger clearing window.localStorage
+		    console.log("CLEARING LOCAL STORAGE");
+		    window.localStorage.clear();
+		}
+		else {
+		    const data_raw = window.localStorage.getItem("chattervox-data");
+		    if (data_raw != null) {
+			data = JSON.parse(data_raw);
+		    }
+		    console.log("**** localStorage, getItem", data);
+		}
+
+		// **** !!!! This should really only go ahead if 'data' is null
+		// But testing found ConfigOptions reverts back to null causing app to crash
+		// So, some additional thinking needed here
+		// Solution for now is to make it do the load (which is happening on an async thread)
+		// so works as before, but then notice data is non-null, so not to make the assignment
+		
 		// Fetch the JSON file from the public directory
-		const response = await fetch("/interface-config.json");
+		const response = await fetch(configURL)
 		if (!response.ok) {
 		    throw new Error('Failed to load JSON file');
 		}
-		const data = await response.json();
+		const url_fetched_data = await response.json();
+		if (data == null) {
+		    console.log("Fetch data returned");
+		    data = url_fetched_data;
+		}
 
-		console.log("Fetch data returned");
-
-		// Check to see if 'lang' in URL params
-		const queryParams = new URLSearchParams(window.location.search);
-		const lang_param = queryParams.get('lang'); 
+		// Apply any override params given in URL
 		
-		if (lang_param) {		    
+		// Handle 'lang' as a special case
+		const lang_param = queryURLParams.get('lang'); 		
+		if (lang_param != null) {
 		    if (lang_param != data.lang) {
 			console.log("Changing display language based on URL param: " + lang_param);
 			data.lang = lang_param;
 		    }
 		}
 
-		// Check for any query params of the form params.XXX
+		// Otherwse, check for any URL query params of the form params.XXX
 		// => use to override value in data
-		for (const full_param of queryParams.keys()) {		    
+		for (const full_param of queryURLParams.keys()) {		    
 		    const match = full_param.match(/^params\.(\w+)$/);		    
 		    if (match) {
 			const param_name = match[1];
-			const param_val  = queryParams.get(full_param);
+			const param_val  = queryURLParams.get(full_param);
 
 			data.params[param_name] = param_val;
 		    }
@@ -99,7 +125,7 @@ export default function Home()
 		setConfigOptions(data);
 		configOptionsRef.current = data;
 				   
-		console.log("ConfigOptios set: ", data);		
+		console.log("[Init] ConfigOptions set: ", data);		
 	    }
 	    catch (error) {
 		console.error("Error reading the JSON file:", error);
@@ -114,13 +140,15 @@ export default function Home()
 	// App Init
 	// => Get the config settings up and running
 	console.log("App Init => load config");
-	console.log("  isLoading = " + isLoading);
-	fetchConfigData();	
+	//console.log("  isLoading = " + isLoading);
+	
+	fetchConfigData("/interface-config.json");	
     }, []);
 
     useEffect(() => {
 	// Further App inits
-	console.log("[page.js] Init useEffect() if 'window' defined and 'mediaPlayer.current' != null");
+	
+	console.log(`[page.js] Init useEffect() (typeof 'window' = ${typeof window}) and (type 'mediaPlayer.current' = ${typeof mediaPlayer.current})`);
 	      
 	if (typeof window !== 'undefined') {
 	    //console.log("App init, dynamically setting MediaPlayer dimensions");
@@ -151,7 +179,7 @@ export default function Home()
     }, []);
 
     useEffect(() => {
-	console.log("[page.js] useEffect() [ConfigOptions] has changed: ");
+	console.log("[page.js] useEffect() [ConfigOptions] has changed");
 	console.log("**** ConfigOptions: ", ConfigOptions);
 	
 	configOptionsRef.current = ConfigOptions;
@@ -164,6 +192,7 @@ export default function Home()
 	    setHowCanIHelpText(interfaceTextResolver(ConfigOptions,"_howCanIHelp_",ConfigOptions.lang));
 	    //}
 
+	    window.localStorage.setItem("chattervox-data",JSON.stringify(ConfigOptions));
 	}
     }, [ConfigOptions]);
 
@@ -378,6 +407,7 @@ export default function Home()
 	
         //console.log("**** Returned message pair: ", returned_message_pair);
 
+	// **** !!!!
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };
 
