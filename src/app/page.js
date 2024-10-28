@@ -50,6 +50,8 @@ export default function Home()
 
     const abortControllerRef = useRef(null);
 
+    const lsConfigOptionsRef = useRef(null); // ls=localStorage -- initial localStorge ConfigOptions if present
+    
     useEffect(() => {
 	// This init makes use of a side-effect, so needs to be controlled so it is only called once
 	// Some NodeJS-based development modes call init twice to stress-test idempotency	
@@ -78,6 +80,8 @@ export default function Home()
 		    const data_raw = window.localStorage.getItem("chattervox-data");
 		    if (data_raw != null) {
 			data = JSON.parse(data_raw);
+			lsConfigOptionsRef.current = data;
+			console.log("@@@@!!!! set lsConfigOptions to data: ", lsConfigOptionsRef.current)
 		    }
 		    console.log("**** localStorage, getItem", data);
 		}
@@ -262,9 +266,10 @@ export default function Home()
 	messagesRef.current = messages;
     }, [messages]);
 
+    
     const updateConfigOptions = (newConfigOptions) => {
-	//console.log("**** !!!! updateConfigOptions() newConfigOptions: ",newConfigOptions);
-	
+	//console.log("**** !!!! updateConfigOptions() newConfigOptions: ",newConfigOptions);	
+
 	setConfigOptions(newConfigOptions);
     };
 
@@ -416,19 +421,39 @@ export default function Home()
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };
 
+    console.log("@@@@@@@@ lsConfigOptions: ", lsConfigOptionsRef.current);
     
+    const themeBackgroundPageColor = (lsConfigOptionsRef.current != null) ? lsConfigOptionsRef.current.cssParams.themeBackgroundPageColor : 'white';
+    const themeForegroundColor     = (lsConfigOptionsRef.current != null) ? lsConfigOptionsRef.current.cssParams.themeForegroundColor : 'lightblue';
+    // //const themeForegroundColor = "hsl(120,100%,50%)";
+    const themeForegroundColorCheck = "hsl(120, 100%, 50%)";
+    console.log("@@@@@ themeForegroundColor = '" + themeForegroundColor + "'");
+    console.log("@@@@@ themeForegroundColor: ", themeForegroundColor);
+
+    if (themeForegroundColor != themeForegroundColorCheck) {
+	console.log("!!!!!! color check different")
+    }
     if (isLoading) {
 	return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
-	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
+	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: themeBackgroundPageColor}}>
 	        <div className="flex flex-col justify-center items-center">
-		  <ReactLoading type="spinningBubbles" color="lightblue" height={'10%'} width={'10%'} />
-		{/*Loading ...*/}
+ 		  <ReactLoading type="spinningBubbles" color={themeForegroundColor} height={'10%'} width={'10%'} />
 		</div>
 	      </div>
 	    </main>
 	);
     }
+
+    const MediaPlayerAndControlsStyle = {
+	padding: '0.5rem 0.5rem 0 0.5rem',	
+	backgroundColor: ConfigOptions.cssParams.themeBackgroundBlockColor
+    };
+
+    const StatusBlockStyle = {
+	padding: '0 0.5rem 0 0.5rem',
+	backgroundColor: ConfigOptions.cssParams.themeBackgroundBlockColor
+    };
     
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
@@ -439,7 +464,7 @@ export default function Home()
 	            {howCanIHelpText}
 	          </div>	    	    
 
-                  <div style={{backgroundColor: '#f4f4f4', padding: '0.5rem 0.5rem 0 0.5rem'}}>
+                  <div style={MediaPlayerAndControlsStyle}>
                     <div style={{width: audioControllerWidth+'px', float: 'left'}} >
                       <div style={{margin: '0.2rem'}}>
 	                <AudioPlayer
@@ -454,7 +479,8 @@ export default function Home()
                     </div>
 	            <div className="border border-solid"
 	                 style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px',
-                                 backgroundColor: 'white', borderColorXX: 'black', float: 'right'}}>
+                                 backgroundColor: ConfigOptions.cssParams.themeBackgroundPageColor,
+				 float: 'right'}}>
 	              <AudioSpectrumVisualizer
 	                ref={(ref) => (visualizerImperativeRefUNUSED = ref)}  
 		        mediaPlayer={mediaPlayer}
@@ -465,15 +491,15 @@ export default function Home()
 		        height={mediaPlayerHeight}
 		        barWidth={3}
 		        gap={2}
-		        barColor={'lightblue'}
+		        barColor={ConfigOptions.cssParams.themeForegroundColor}
         		updateStatusCallback={updateStatus}                        
 		      />
 	            </div>
                     
                   </div>
-                  <div style={{backgroundColor: '#f4f4f4', padding: '0 0.5rem 0 0.5rem'}}>
+                  <div style={StatusBlockStyle}>
 	            <div className="textmessage text-sm p-2 mt-0 italic"
-                         style={{width: interfaceWidth+'px', color: 'black', borderColorXX: '#176593'}} >
+                         style={{width: interfaceWidth+'px', colorXXXX: ConfigOptions.cssParams.themeForegroundPageColor}} >
 	              {statusText}
 	            </div>
 	          </div>

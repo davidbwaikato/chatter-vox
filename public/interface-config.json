@@ -132,8 +132,9 @@
 
     "cssParams": {
 	"themeForegroundColor"       : "hsl(195, 53%, 80%)",
-	"themeForegroundHoverColor"  : "hsl(195, 53%, 85%)",	
-	"themeBackgroundColor"       : "white",
+	"themeForegroundHoverColor"  : "hsl(195, 53%, 85%)",
+	"themeBackgroundPageColor"   : "white",
+	"themeBackgroundBlockColor"  : "#F4F4F4",
 	"themeDisabledColor"         : "rgb(200,200,200)"
     },
     
