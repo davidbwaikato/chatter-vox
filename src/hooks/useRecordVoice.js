@@ -221,6 +221,7 @@ export const useRecordVoice = (props) => {
 	// of whether or not the user stops their actually asked question/entered prompt
 
 	console.log(`Generate new interface for '${newLang}'`);
+	props.updateStatusCallback("_statusUITranslationStarted_",true,false);
 	
 	const response = await fetch("/api/chatLLM", {
 	    method: "POST",
@@ -246,6 +247,7 @@ export const useRecordVoice = (props) => {
 	    const newInterfaceText = JSON.parse(response.content);
 
 	    props.updateInterfaceTextLangCallback(newLang,newInterfaceText);
+	    props.updateStatusCallback("_statusUITranslationCompleted_",false,true);
 	}
 	else {
 	    console.error("Failed to retrieve new interface text from OpenAI");	    
@@ -256,6 +258,7 @@ export const useRecordVoice = (props) => {
     const updateConfigOptionsWithLLM = async (promptText, abortController) => {
 
 	console.log("updateConfigOptionsWithLLM");
+	props.updateStatusCallback("_statusUIConfigUpdateStarted_",true,false);
 	
 	const response = await fetch("/api/chatLLM", {
 	    method: "POST",
@@ -281,10 +284,11 @@ export const useRecordVoice = (props) => {
 	if (response != null) {
 	    const newConfigOptions = JSON.parse(response.content);
 	    props.updateConfigOptionsCallback(newConfigOptions);
+	    props.updateStatusCallback("_statusUIConfigUpdateCompleted_",false,true);	    
 	}
 	else {
 	    console.error("Failed to retrieve new JSON ConfigOptions from OpenAI");	    
-	    props.updateStatusCallback("_statusUIConfigUpdateFailed_");
+	    props.updateStatusCallback("_statusUIConfigUpdateFailed_", false,true);
 	}
     };
 
@@ -367,11 +371,7 @@ export const useRecordVoice = (props) => {
 			updateConfigOptionsWithLLM(promptText,abortController);
 			
 			const lang_config_being_updated = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationBeingUpdated_",lang);
-			returned_top_message.content = lang_config_being_updated;
-			
-
-			//const lang_config_change_not_supported = interfaceTextResolver(props.configOptionsRef.current,"_textUIConfigurationNotSupported_",lang);
-			//returned_top_message.content = lang_config_change_not_supported;
+			returned_top_message.content = lang_config_being_updated;			
 		    }
 		}
 

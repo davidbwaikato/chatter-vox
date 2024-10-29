@@ -28,7 +28,7 @@ export default function Home()
     const [audioPlayerMode, setAudioPlayerMode] = useState(AudioPlayerModeEnum.inactive);
 
     const [howCanIHelpText, setHowCanIHelpText] = useState(""); 
-    const [statusText, setStatusText]     = useState("");
+    const [statusText, setStatusText]           = useState("");
 
     const [blob, setBlob]                 = useState(null); // <Blob>
     const [apBlob, setAudioPlayerBlob]    = useState(null); // <Blob> for AudioPlayer
@@ -44,10 +44,12 @@ export default function Home()
     let microphoneImperativeRef = null;
     let visualizerImperativeRefUNUSED = null;
 
-    const configOptionsRef = useRef(null); 
-    const messagesRef      = useRef(null);    
-    const mediaPlayer      = useRef(null); // <MediaPlayer>
-
+    const configOptionsRef   = useRef(null); 
+    const messagesRef        = useRef(null);    
+    const holdProcessingRef  = useRef(false);
+    const holdStatusTextRef  = useState("");   
+    const mediaPlayer        = useRef(null);  // <MediaPlayer>
+    
     const abortControllerRef = useRef(null);
 
     const lsConfigOptionsRef = useRef(null); // ls=localStorage -- initial localStorge ConfigOptions if present
@@ -127,6 +129,12 @@ export default function Home()
 		}
 		
 		setConfigOptions(data);
+		
+		window.localStorage.setItem("chattervox-loading-fg",data.cssParams.themeForegroundColor);
+		//console.log("**** #### just set chattervox-loading-fg to: " + data.cssParams.themeForegroundColor);
+		    
+		////window.localStorage.setItem("chattervox-loading-bg",data.cssParams.themeBackgroundPageColor);
+		
 		configOptionsRef.current = data;
 				   
 		console.log("[Init] ConfigOptions set: ", data);		
@@ -136,8 +144,16 @@ export default function Home()
 	    }
 	    finally {
 		// Stop loading once done
-		console.log("Setting isLoading to false");
-		setIsLoading(false);
+		console.log("Starting artificial 2 sec delay");
+		setTimeout(function() {
+		    console.log("Completed artificial 2 sec delay");
+		    //
+		    //var start = new Date().getTime(), expire = start + 3000;
+		    //while (new Date().getTime() < expire) { }
+		
+		    console.log("Setting isLoading to false");
+		    setIsLoading(false);
+		},2000);
 	    }
 	}
 
@@ -225,8 +241,14 @@ export default function Home()
 	}
 	else {
 	    console.log(`[page.js] useEffect() [blob] blob is null  => setting mediaPlayer.state to "inactive"`);
-            setInterfaceMode(InterfaceModeEnum.inactive);            
-	    mediaPlayer.current.state = "inactive";
+	    if (holdProcessingRef.current) {
+		setInterfaceMode(InterfaceModeEnum.processing);
+	    }
+	    else {
+		// return to usual inactive state
+		setInterfaceMode(InterfaceModeEnum.inactive);
+		mediaPlayer.current.state = "inactive";
+	    }
 	}
     }, [blob]);
 
@@ -238,6 +260,8 @@ export default function Home()
             setMicrophoneMode(MicrophoneModeEnum.inactive);
 	    microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.inactive);
             setAudioPlayerMode(AudioPlayerModeEnum.inactive);
+	    // To help balance on forced mediaPlayer.current going to 'processing' ???
+	    //mediaPlayer.current.state = "inactive"; // **** ???? XXXX 
         }
         else if (interfaceMode === InterfaceModeEnum.recording) {
             setMicrophoneMode(MicrophoneModeEnum.recording);
@@ -295,8 +319,7 @@ export default function Home()
 	setConfigOptions(newConfigOptions);
     };
     
-    
-    const updateStatus = (text_marker) => {
+    const updateStatus = (text_marker,hold_processing=false,release_processing=false) => {
 	// This function needs to work with the configOptionsRef version of language
 	// This is because calling the method sometimes occurs in from a callback function
 	// and when the closure of the callback function is created, the Lang state is
@@ -304,28 +327,57 @@ export default function Home()
 	
 	const Lang_ref = configOptionsRef.current.lang;
 	
-	//console.log("*** updateStatus(), (dynamic look) Lang_ref = " + Lang_ref + ", text_marker = " + text_marker);	
+	console.log("*** updateStatus(), (dynamic look) Lang_ref = " + Lang_ref + ", text_marker = " + text_marker);	
 	let lang_text = text_marker;
+
+	console.log(`**** !!!! hold_processing=${hold_processing}, release_processing=${release_processing}, holdProcessingRef.current=${holdProcessingRef.current}`);
 	
 	if (text_marker in configOptionsRef.current.interfaceText) {
 
-	    if (text_marker.endsWith("Processing_")) {
+	    if (hold_processing) {
+		holdProcessingRef.current = true;
 		setInterfaceMode(InterfaceModeEnum.processing);
 	    }
-	    else if (text_marker.match(/(Completed_|Recieved_|Result_)$/)) {
-		setInterfaceMode(InterfaceModeEnum.inactive);		
+	    else {
+		if (holdProcessingRef.current) {
+		    if (release_processing) {
+			mediaPlayer.current.state = "inactive";
+			setInterfaceMode(InterfaceModeEnum.inactive);			
+			holdProcessingRef.current = false;
+		    }
+		    // else ignore it, with respect to changing processing sate
+		}
+		else {
+		    if (text_marker.endsWith("Processing_")) {
+			setInterfaceMode(InterfaceModeEnum.processing);
+		    }
+		    else if (text_marker.match(/(Completed_|Recieved_|Result_)$/)) {
+			setInterfaceMode(InterfaceModeEnum.inactive);		
+		    }
+		}
 	    }
-
 	    lang_text = interfaceTextResolver(configOptionsRef.current,text_marker,Lang_ref);	    
 	}
 
-	const status_label = interfaceTextResolver(configOptionsRef.current,"_statusLabel_",Lang_ref);
+	if (hold_processing) {
+	    console.log("**** #### !!!! STORING HOLD lang_text = " + lang_text + ` [${text_marker}]`);
+	    holdStatusTextRef.current = lang_text;
+	}
+	else if (holdProcessingRef.current)  {
+	    lang_text = `${lang_text} [${holdStatusTextRef.current}]`;
+	}
+	
+	if (release_processing) {
+	    holdStatusTextRef.current = "";
+	}
 
+	    
 	if (Lang_ref == "mi") {
 	    // Te Taka requested that there be no 'status: ' text
 	    setStatusText(lang_text);
 	}
 	else {
+	    const status_label = interfaceTextResolver(configOptionsRef.current,"_statusLabel_",Lang_ref);
 	    setStatusText(status_label+ ": " + lang_text);
 	}
 
@@ -404,7 +456,6 @@ export default function Home()
 
     const updateMessagesCallback = (updatedMessages) => {
 
-	
 	const updated_messages_len = updatedMessages.length;
 	
 	// For backwards compatability reasons with debugging output
@@ -420,25 +471,18 @@ export default function Home()
 	// **** !!!!
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };
-
-    console.log("@@@@@@@@ lsConfigOptions: ", lsConfigOptionsRef.current);
     
-    const themeBackgroundPageColor = (lsConfigOptionsRef.current != null) ? lsConfigOptionsRef.current.cssParams.themeBackgroundPageColor : 'white';
-    const themeForegroundColor     = (lsConfigOptionsRef.current != null) ? lsConfigOptionsRef.current.cssParams.themeForegroundColor : 'lightblue';
-    // //const themeForegroundColor = "hsl(120,100%,50%)";
-    const themeForegroundColorCheck = "hsl(120, 100%, 50%)";
-    console.log("@@@@@ themeForegroundColor = '" + themeForegroundColor + "'");
-    console.log("@@@@@ themeForegroundColor: ", themeForegroundColor);
-
-    if (themeForegroundColor != themeForegroundColorCheck) {
-	console.log("!!!!!! color check different")
-    }
+    const lsConfigOptions_raw = window.localStorage.getItem("chattervox-data");
+    const lsConfigOptions = lsConfigOptions_raw != null ? JSON.parse(lsConfigOptions_raw) : null;
+    console.log("@@@@@@@@ lsConfigOptions: ", lsConfigOptions);    
+    const themeForegroundColor     = (lsConfigOptions != null) ? lsConfigOptions.cssParams.themeForegroundColor : 'lightblue';
+    
     if (isLoading) {
 	return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
-	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: themeBackgroundPageColor}}>
+	      <div style={{width: "90%", maxWidth: "900px", backgroundColorXXXX: 'white'}}>
 	        <div className="flex flex-col justify-center items-center">
- 		  <ReactLoading type="spinningBubbles" color={themeForegroundColor} height={'10%'} width={'10%'} />
+		  <ReactLoading type="spinningBubbles" color={themeForegroundColor} height={'10%'} width={'10%'} />
 		</div>
 	      </div>
 	    </main>

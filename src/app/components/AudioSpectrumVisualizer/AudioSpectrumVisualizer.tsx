@@ -189,7 +189,8 @@ const AudioSpectrumVisualizer = forwardRef<ReactElement, Props>(
               }
           }
           */
-          
+
+          // Refactor into supporting function
           console.log("Displaying default frequency values of zeros");          
           const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
               max: 0,
@@ -362,6 +363,16 @@ const AudioSpectrumVisualizer = forwardRef<ReactElement, Props>(
           if (audioSource) {
               audioSource.stop(0)
           }
+
+        console.log("Changing from playing/processing to inactive");
+	console.log("=> Displaying default frequency values of zeros");          
+          const dataZeros = Array.from({ length: Math.floor(fftSize/2) }, () => ({
+              max: 0,
+              min: 0,
+          }));
+	  const data = new Uint8Array(dataZeros);	  
+	  processFrequencyData(data);
+	
       }
   }, [analyser, audioContext ? audioContext.state : null]);
 
