@@ -147,10 +147,6 @@ export default function Home()
 		console.log("Starting artificial 2 sec delay");
 		setTimeout(function() {
 		    console.log("Completed artificial 2 sec delay");
-		    //
-		    //var start = new Date().getTime(), expire = start + 3000;
-		    //while (new Date().getTime() < expire) { }
-		
 		    console.log("Setting isLoading to false");
 		    setIsLoading(false);
 		},2000);
@@ -294,6 +290,11 @@ export default function Home()
     const updateConfigOptions = (newConfigOptions) => {
 	//console.log("**** !!!! updateConfigOptions() newConfigOptions: ",newConfigOptions);	
 
+	if (newConfigOptions.params.chatLLM != ConfigOptions.params.chatLLM) {
+	    console.log("Resetting messages to be empty");
+	    setMessages(null);
+	}
+
 	setConfigOptions(newConfigOptions);
     };
 
@@ -349,10 +350,15 @@ export default function Home()
 		}
 		else {
 		    if (text_marker.endsWith("Processing_")) {
+			mediaPlayer.current.state = "processing";
 			setInterfaceMode(InterfaceModeEnum.processing);
 		    }
-		    else if (text_marker.match(/(Completed_|Recieved_|Result_)$/)) {
+		    else if (text_marker.match(/(Completed_|Received_|Result_|Error_)$/)) {
+			mediaPlayer.current.state = "inactive";			
 			setInterfaceMode(InterfaceModeEnum.inactive);		
+		    }
+		    else if (text_marker == "_statusUnableToRecord_") {
+			microphoneImperativeRef.updateMicrophoneMode(MicrophoneModeEnum.disabled);
 		    }
 		}
 	    }
@@ -364,7 +370,9 @@ export default function Home()
 	    holdStatusTextRef.current = lang_text;
 	}
 	else if (holdProcessingRef.current)  {
-	    lang_text = `${lang_text} [${holdStatusTextRef.current}]`;
+	    if (holdStatusTextRef.current != null) {
+		lang_text = `${lang_text} [${holdStatusTextRef.current}]`;
+	    }
 	}
 	
 	if (release_processing) {
@@ -471,18 +479,21 @@ export default function Home()
 	// **** !!!!
         setMessages([...updatedMessages]); // **** is the array copy needed here?
     };
-    
+
+    /*
     const lsConfigOptions_raw = window.localStorage.getItem("chattervox-data");
     const lsConfigOptions = lsConfigOptions_raw != null ? JSON.parse(lsConfigOptions_raw) : null;
     console.log("@@@@@@@@ lsConfigOptions: ", lsConfigOptions);    
     const themeForegroundColor     = (lsConfigOptions != null) ? lsConfigOptions.cssParams.themeForegroundColor : 'lightblue';
+    <ReactLoading type="spinningBubbles" color={themeForegroundColor} height={'10%'} width={'10%'} />
+    */
     
     if (isLoading) {
 	return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
-	      <div style={{width: "90%", maxWidth: "900px", backgroundColorXXXX: 'white'}}>
+	      <div style={{width: "90%", maxWidth: "900px"}}>
 	        <div className="flex flex-col justify-center items-center">
-		  <ReactLoading type="spinningBubbles" color={themeForegroundColor} height={'10%'} width={'10%'} />
+		  <ReactLoading type="spinningBubbles" color={'lightblue'} height={'10%'} width={'10%'} />
 		</div>
 	      </div>
 	    </main>
@@ -491,20 +502,23 @@ export default function Home()
 
     const MediaPlayerAndControlsStyle = {
 	padding: '0.5rem 0.5rem 0 0.5rem',	
-	backgroundColor: ConfigOptions.cssParams.themeBackgroundBlockColor
+	backgroundColor: (ConfigOptions!=null) ? ConfigOptions.cssParams.themeBackgroundBlockColor : "#F4F4F4"
     };
 
     const StatusBlockStyle = {
 	padding: '0 0.5rem 0 0.5rem',
-	backgroundColor: ConfigOptions.cssParams.themeBackgroundBlockColor
+	backgroundColor: (ConfigOptions!=null) ? ConfigOptions.cssParams.themeBackgroundBlockColor : "#F4F4F4"
     };
     
     return (
 	    <main className="flex min-h-screen flex-col items-center justify-center">
 	      <div style={{width: "90%", maxWidth: "900px", backgroundColor: 'white'}}>
-
+  	       {(ConfigOptions != null) ? 
 	        <div className="flex flex-col justify-center items-center">
-	          <div className="textmessage pb-2" style={{width: interfaceWidth+'px'}} >                  
+	          <div style={{padding: "1.5rem 0 1.5rem 0"}}>
+	            <img src="chattervox-feature.png" style={{width: "270px",  borderRadius: "50%"}}/>
+	          </div>
+	          <div className="textmessage pb-2" style={{width: interfaceWidth+'px'}} >
 	            {howCanIHelpText}
 	          </div>	    	    
 
@@ -520,11 +534,12 @@ export default function Home()
         		  updateStatusCallback={updateStatus}
                         />
                       </div>
-                    </div>
-	            <div className="border border-solid"
+                   </div>
+	           <div className="border border-solid"
 	                 style={{width: mediaPlayerWidth+'px', height: mediaPlayerHeight+'px',
-                                 backgroundColor: ConfigOptions.cssParams.themeBackgroundPageColor,
+                                 backgroundColor: (ConfigOptions != null) ? ConfigOptions.cssParams.themeBackgroundPageColor : "white",
 				 float: 'right'}}>
+	               
 	              <AudioSpectrumVisualizer
 	                ref={(ref) => (visualizerImperativeRefUNUSED = ref)}  
 		        mediaPlayer={mediaPlayer}
@@ -535,7 +550,7 @@ export default function Home()
 		        height={mediaPlayerHeight}
 		        barWidth={3}
 		        gap={2}
-		        barColor={ConfigOptions.cssParams.themeForegroundColor}
+	                barColor={(ConfigOptions != null) ? ConfigOptions.cssParams.themeForegroundColor : 'lightblue'}
         		updateStatusCallback={updateStatus}                        
 		      />
 	            </div>
@@ -543,7 +558,7 @@ export default function Home()
                   </div>
                   <div style={StatusBlockStyle}>
 	            <div className="textmessage text-sm p-2 mt-0 italic"
-                         style={{width: interfaceWidth+'px', colorXXXX: ConfigOptions.cssParams.themeForegroundPageColor}} >
+                         style={{width: interfaceWidth+'px'}} >
 	              {statusText}
 	            </div>
 	          </div>
@@ -561,6 +576,11 @@ export default function Home()
                     updateMessagesCallback={updateMessagesCallback}
 	          />
                 </div>
+		:
+		<div className="flex flex-col justify-center items-center">
+		  An error occurred when initialising the interface.
+		</div>
+	       }
 	      </div>
 	    </main>
   );

@@ -82,7 +82,7 @@ const Microphone = forwardRef((props,ref) => {
 	    else {
 		// Originally set to be 'lightblue' [hsl(195, 53%, 80%)]
 		return_val = cssSettingResolver(configOptions,"micBackgroundColor");
-		//return 'hsl(195, 53%, 80%)' // lightblue
+		if (return_val == null) { return_val = 'hsl(195, 53%, 80%)'; /* lightblue*/ }
 	    }
 	}
 
@@ -93,7 +93,7 @@ const Microphone = forwardRef((props,ref) => {
         backgroundColor: micBackgroundColor()
     };
 
-    const lang_  = props.configOptionsRef.current.lang;
+    const lang_  = (props.configOptionsRef.current != null) ? props.configOptionsRef.current.lang : "en";
     const it_microphoneInstructions = props.configOptionsRef.current.interfaceText["_microphoneInstructions_"];
     
     //const micLevelStyle = {

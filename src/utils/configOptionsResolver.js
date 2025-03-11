@@ -58,6 +58,9 @@ const interfaceTextResolver = (configOptions,textFragmentKey,lang) => {
 };
 
 const cssSettingResolver = (configOptions,cssKey) => {
+
+    if (configOptions == null) { return null };
+    
     const cssSettings = configOptions.cssSettings;
     
     //console.log(`cssSettingResolver() Looking up '${cssKey}' in: "`, cssSettings);
