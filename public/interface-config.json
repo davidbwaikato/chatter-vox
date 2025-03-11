@@ -5,8 +5,19 @@
 	"textToSpeech"  : "OpenAI"
     },
 
+    "voice": "alloy",
+    
     "lang"          : "en",
 
+    "voice_choices": [
+	{ "name": "alloy",   "description": "Neutral sound.  The default voice." },
+	{ "name": "echo",    "description": "American male.  Voice pitch is mid-range." },
+	{ "name": "fable",   "description": "British sounding. Voice pitch is mid-range" },
+	{ "name": "onyx",    "description": "American mael.  Voice pitch is a deeper register" },
+	{ "name": "nova",    "description": "American female." },
+	{ "name": "shimmer", "description": "American female.  Higher energy speaking style." }
+    ],
+    
     "interfaceLangs": [ "en", "mi" ],
     
     "interfaceText" : {
@@ -80,7 +91,7 @@
 	},
 	
 	"_statusNetworkError_": {
-	"en": "A network error occured",
+	    "en": "A network error occured",
 	    "mi": "Kua whati te tūhononga rorohiko"
 	},
 	"_textInfoNetworkError_": {
@@ -88,13 +99,19 @@
 	    "mi": "Kua whati te tūhononga rorohiko i a ${chatLLM} e whakaaro ana"
 	},
 
+	"_statusUITranslationStarted_": {
+	    "en": "Interface translation started ...",
+	    "mi": "I timata te whakamaoritanga atanga ..."
+	},
+	
+	"_statusUITranslationCompleted_": {
+	    "en": "Interface translation completed",
+	    "mi": "Kua oti te whakamaoritanga atanga"
+	},
+	
         "_statusUITranslationFailed_": {	
 	    "en": "Failed to retrieve translated interface text",
 	    "mi": "I rahua te tiki i nga kuputuhi atanga kua whakamaoritia"
-	},
-        "_statusUIConfigUpdateFailed_": {	
-	    "en": "Failed to update interface configuration",
-	    "mi": "I rahua te whakahou i te whirihoranga atanga"
 	},
 
 	"_textUIConfigurationNotSupported_": {
@@ -105,7 +122,19 @@
 	    "en": "User interface being updated.",
 	    "mi": "Kei te whakahouhia te atanga kaiwhakamahi."
 	},
-	
+	"_statusUIConfigUpdateStarted_": {
+	    "en": "Updating ...",
+	    "mi": "Whakahōu ana ..."
+	},
+	"_statusUIConfigUpdateCompleted_": {
+	    "en": "Updating completed",
+	    "mi": "Kua oti te whakahou"
+	},	
+        "_statusUIConfigUpdateFailed_": {	
+	    "en": "Failed to update interface configuration",
+	    "mi": "I rahua te whakahou i te whirihoranga atanga"
+	},
+
 	"_statusAudioPlayerPaused_": {
 	    "en": "Paused",
 	    "mi": "E tū ana"
