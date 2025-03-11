@@ -85,7 +85,7 @@ async function POST_OPENAI(body) {
 
     console.log("[ChatLLM route.js, OpenAI] [context] messages:");
     console.log(messages);
-    
+
     //console.log(`promptText = ${promptText}`);
     
     const newUserMessage = {
@@ -123,8 +123,10 @@ async function POST_OPENAI(body) {
 	return NextResponse.json(response_data);	
     }
     catch (error) {
-	console.error("Error getting OpenAI response to promptText:", error);	
-	return NextResponse.error();
+	console.error("Error getting OpenAI response to promptText:", error);
+
+	//return NextResponse.error();
+	return NextResponse.json({ error: 'OpenAI ChatGPT API call failed' }, { status: 500 })
     }    
 }
 
@@ -146,8 +148,8 @@ async function POST_CLAUDE(body)
     
     const updatedMessages = [...messages, newUserMessage];
     
-    //console.log("[Anthropic/Claude route.js] updatedMessages:");
-    //console.log(updatedMessages);
+    console.log("[Anthropic/Claude route.js] updatedMessages:");
+    console.log(updatedMessages);
     
     try {
 	const message = await anthropic.messages.create({
@@ -170,7 +172,9 @@ async function POST_CLAUDE(body)
     }
     catch (error) {
 	console.error("Error getting Anthropic Claude response to promptText:", error);
-	return NextResponse.error();
+
+	//return NextResponse.error();
+	return NextResponse.json({ error: 'Anthropic Claude API call failed' }, { status: 500 })	
     }    
 }
 
@@ -267,8 +271,10 @@ async function postGenerateLanguageInterfaceOpenAI(body) {
 	return NextResponse.json(response_data);
     }
     catch (error) {
-	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);	
-	return NextResponse.error();
+	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);
+
+	return NextResponse.json({ error: 'GenerateNewLanguageMessages: OpenAI ChatGPT API call failed' }, { status: 500 })		
+	//return NextResponse.error();
     }    
 }
 
@@ -321,8 +327,9 @@ async function postUpdateConfigSettingsOpenAI(body) {
 	return NextResponse.json(response_data);
     }
     catch (error) {
-	console.error("Error getting OpenAI response to GenerateNewLanguageMessages:", error);	
-	return NextResponse.error();
+	console.error("Error getting OpenAI response to UpdateConfigSettings:", error);	
+	//return NextResponse.error();
+	return NextResponse.json({ error: 'UpdateConfigSettings: OpenAI ChatGPT API call failed' }, { status: 500 })	
     }    
 }
 
@@ -363,6 +370,7 @@ export async function POST(req)
     }
     else {
 	console.error(`[root.js, chatLLM] Unrecognised body.mode: '${body.mode}'`);
+	returned_response =  NextResponse.json({ error: `ChatLLM: Unrecognised mode '${body.mode}'` }, { status: 500 })	
     }
     
     return returned_response;
