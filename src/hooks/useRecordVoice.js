@@ -80,7 +80,6 @@ export const useRecordVoice = (props) => {
 		stopRecording();
 	    }
 	    else {
-		//props.updateStatusCallback("Recording ...");
 		props.updateStatusCallback("_statusRecording_");
 		
 		isRecording.current = true;
@@ -309,7 +308,7 @@ export const useRecordVoice = (props) => {
 		current_params.chatLLM = "Claude";
 	    }
 	    else {
-		console.log(`=> Operating with bounds: params.chatLLM = '${params.chatLLM}'`);
+		console.log(`=> Operating within bounds: params.chatLLM = '${current_params.chatLLM}'`);
 	    }
 	}
 
@@ -604,7 +603,21 @@ export const useRecordVoice = (props) => {
 	  
 	      navigator.mediaDevices
 		  .getUserMedia({ audio: true })
-		  .then(initializeMediaRecorder);
+		  .then(initializeMediaRecorder)
+		  .catch((err) => {
+		      console.warn(`Unable to access a microphone: ${err}`);
+		      props.updateStatusCallback("_statusUnableToRecord_");
+		  });
+	      /*
+	      let mediaStream = null
+	      try {
+		  mediaStream =
+		      await navigator.mediaDevices.getUserMedia({ audio: true });
+	      } catch (err) {
+		  console.error(`Error: ${err}`);
+	      }
+	      	  .then(initializeMediaRecorder);
+	      */
 	  }
 	  else {
 	      if (!window.isSecureContext) {
